@@ -106,3 +106,42 @@ body {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
+
+/* Cinematic Scrollbar Fixes */
+.custom-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Theme Animation & Transitions */
+.neon-glow {
+  filter: blur(80px);
+  mask-image: radial-gradient(circle at center, black, transparent 80%);
+}
+
+.shadow-blue {
+  box-shadow: 0 0 15px rgba(0, 209, 255, 0.4);
+}
+
+.shadow-glow-blue {
+  box-shadow: 0 0 25px rgba(0, 209, 255, 0.3);
+}
+
+@keyframes flow-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-flow {
+  background-size: 200% 200%;
+  animation: flow-gradient 10s ease infinite;
+}
+
+/* Ensure no bounce on OS shell */
+html, body {
+  overscroll-behavior: none;
+}

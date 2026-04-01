@@ -37,9 +37,12 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
   const shopItems: Item[] = [
     { id: 'neon-cyber', name: 'Cyber Neon Theme', price: 250, type: 'THEME', rarity: 'RARE', preview: 'bg-blue/20' },
     { id: 'lava-volcano', name: 'Volcanic Core Theme', price: 500, type: 'THEME', rarity: 'EPIC', preview: 'bg-red/20' },
+    { id: 'deep-sea', name: 'Abyssal Deep Theme', price: 350, type: 'THEME', rarity: 'RARE', preview: 'bg-cyan-900/40' },
     { id: 'monochrome', name: 'Ghost Monochrome', price: 100, type: 'THEME', rarity: 'COMMON', preview: 'bg-white/10' },
-    { id: 'orbitron-font', name: 'Orbitron Timer Font', price: 150, type: 'FONT', rarity: 'RARE', preview: 'font-display italic' },
+    { id: 'orbitron-font', name: 'Orbitron Timer Font', price: 150, type: 'FONT', rarity: 'RARE', preview: 'font-mono italic' },
+    { id: 'matrix-font', name: 'Emerald Matrix Font', price: 400, type: 'FONT', rarity: 'EPIC', preview: 'text-green-500 font-mono' },
     { id: 'inter-stellar', name: 'Interstellar Backdrop', price: 800, type: 'BACKDROP', rarity: 'LEGENDARY', preview: 'opacity-50 blur-lg' },
+    { id: 'nebula-sky', name: 'Orion Nebula Backdrop', price: 1200, type: 'BACKDROP', rarity: 'LEGENDARY', preview: 'bg-purple-900/20' },
   ];
 
   const filteredItems = filter === 'ALL' ? shopItems : shopItems.filter(i => i.type === filter);
