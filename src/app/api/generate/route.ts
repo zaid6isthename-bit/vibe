@@ -23,6 +23,19 @@ export async function POST(req: NextRequest) {
         prompt = `Generate a single micro-challenge for a student who just read: "${payload.content}". Format as JSON: { type: "quiz", question: string, options: string[], correct_answer: string, explanation: string }. Make it feel like a game.`;
         jsonMode = true;
         break;
+      
+      case 'DECISION_DEBATE':
+        prompt = `Analyze this decision: "${payload.topic}". 
+        Return JSON with:
+        {
+          breakdown: { goal: string, clarity: number, options: string[] },
+          prosCons: [{ opt: string, pros: string[], cons: string[], risk: string }],
+          debate: [{ role: "Optimist" | "Skeptic" | "Judge", content: string }],
+          recommendation: string,
+          confidence: number
+        }`;
+        jsonMode = true;
+        break;
 
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

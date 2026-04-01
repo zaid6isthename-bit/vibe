@@ -21,29 +21,29 @@ export const DecisionsPanel: React.FC = () => {
   const handleSuggest = async () => {
     if (!decisionTitle) return;
     setLoading(true);
-    // Real-world fallback/mock for demo speed
-    setTimeout(() => {
-      setOutcome({
-        breakdown: {
-           goal: "Establish long-term career stability while maximizing income.",
-           clarity: 82,
-           options: ["Accept Startup Lead", "Stay at Corp", "Full-time Freelance"]
-        },
-        prosCons: [
-           { opt: "Startup Lead", pros: ["High growth", "Equity"], cons: ["Unstable", "Long hours"], risk: "High" },
-           { opt: "Stay at Corp", pros: ["Benefits", "Work-life balance"], cons: ["Stagnant", "Low equity"], risk: "Low" }
-        ],
-        debate: [
-           { role: 'Optimist', content: 'The startup offers transformative growth and ownership. In 3 years, you could be a founder-level leader.' },
-           { role: 'Skeptic', content: '90% of startups fail within 2 years. Corporate stability ensures you can build personal capital safely.' },
-           { role: 'Judge', content: 'Based on your "Risk Style" (Moderate), Accept Startup Lead is recommended ONLY if cash runway is 6 months.' }
-        ],
-        recommendation: "Accept Startup Lead",
-        confidence: 89
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'DECISION_DEBATE', payload: { topic: decisionTitle } })
       });
-      setLoading(false);
+      const data = await res.json();
+      setOutcome(data);
       setActiveStep('DEBATE');
-    }, 2000);
+    } catch (e) {
+      console.error(e);
+      // Fallback for demo if API fails
+      setOutcome({
+        breakdown: { goal: decisionTitle, clarity: 85, options: ["Option A", "Option B"] },
+        debate: [{ role: 'Judge', content: 'Neural simulation suggests focusing on short-term stability first.' }],
+        recommendation: "Neutral Path",
+        confidence: 70,
+        prosCons: []
+      });
+      setActiveStep('DEBATE');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
