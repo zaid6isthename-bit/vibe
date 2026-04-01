@@ -17,13 +17,17 @@ export const useNeuroWallet = () => {
 
   // Load from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('neuro-wallet');
-    if (saved) {
-      const data = JSON.parse(saved);
-      setCoins(data.coins || 0);
-      setStreak(data.streak || 0);
-      setUnlockedItems(data.unlockedItems || ['default-theme']);
-      setActiveTheme(data.activeTheme || 'default-theme');
+    try {
+      const saved = localStorage.getItem('neuro-wallet');
+      if (saved) {
+        const data = JSON.parse(saved);
+        setCoins(data.coins || 0);
+        setStreak(data.streak || 0);
+        setUnlockedItems(data.unlockedItems || ['default-theme']);
+        setActiveTheme(data.activeTheme || 'default-theme');
+      }
+    } catch (e) {
+      console.error("Failed to parse wallet data:", e);
     }
   }, []);
 
