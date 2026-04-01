@@ -17,7 +17,7 @@ interface TopicInputProps {
 
 export const TopicInput: React.FC<TopicInputProps> = ({ onStart }) => {
   const [topic, setTopic] = useState('');
-  const [suggestions, setSuggestions] = useState<string[]>(['Compound Interest', 'Quantum Physics', 'Stoicism 101', 'Web Basics']);
+  const [suggestions, setSuggestions] = useState<string[]>(['Semiconductors', 'Quantum Physics', 'Stoicism 101', 'Web Basics']);
   const [loading, setLoading] = useState(false);
   const [selectedSubtopics, setSelectedSubtopics] = useState<string[]>([]);
 

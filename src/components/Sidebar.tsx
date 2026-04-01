@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { 
-  LayoutDashboard, BookOpen, Scale, Zap, BarChart3, Settings, Brain, LogOut, Info, ShieldCheck, Cpu, ShoppingBag 
+  LayoutDashboard, BookOpen, Scale, Zap, BarChart3, Settings, Brain, LogOut, Info, ShieldCheck, Cpu, ShoppingBag, Clock 
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -22,6 +22,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, coins 
   const menuItems = [
     { id: 'DASHBOARD', icon: LayoutDashboard, label: 'Dashboard', sub: 'System Overview' },
     { id: 'STUDY', icon: BookOpen, label: 'Study System', sub: 'Attention & Recall' },
+    { id: 'POMODORO', icon: Clock, label: 'Deep Work', sub: 'Adaptive Focus Timer' },
     { id: 'DECISIONS', icon: Scale, label: 'Decisions', sub: 'AI Copilot & Debate' },
     { id: 'EXECUTION', icon: Zap, label: 'Execution', sub: 'Kanban & Momentum' },
     { id: 'INSIGHTS', icon: BarChart3, label: 'Insights', sub: 'Intelligence Profile' },
@@ -29,7 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, coins 
   ];
 
   return (
-    <div className="w-80 h-screen sidebar-glass flex flex-col p-6 sticky top-0 shrink-0">
+    <div className="w-80 h-screen sidebar-glass flex flex-col p-6 sticky top-0 shrink-0 z-50">
       <div className="flex items-center gap-4 px-3 mb-12 group cursor-pointer">
         <motion.div 
            whileHover={{ scale: 1.1, rotate: 10 }}

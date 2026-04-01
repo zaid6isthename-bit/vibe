@@ -39,6 +39,13 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
   const [inRecapMode, setInRecapMode] = useState(false);
   const [recapQuestions, setRecapQuestions] = useState<any[]>([]);
   const [recapIdx, setRecapIdx] = useState(0);
+  
+  // New Stages: Thought Process & Flashcards
+  const [thoughtProcess, setThoughtProcess] = useState<string>("");
+  const [flashcards, setFlashcards] = useState<{front: string, back: string}[]>([]);
+  const [currentStage, setCurrentStage] = useState<'SECTIONS' | 'THOUGHT' | 'FLASHCARDS' | 'QUIZ'>('SECTIONS');
+  const [flashcardIdx, setFlashcardIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
 
   const currentSection = sections[currentIdx];
   const attention = useAttention(currentSection?.id);
@@ -52,8 +59,13 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'GENERATE_SECTIONS', payload: { topic } }),
         });
+        if (!res.ok) throw new Error('API unstable');
         const data = await res.json();
-        setSections(data);
+        if (Array.isArray(data)) {
+           setSections(data);
+        } else {
+           console.error("Malformed sections data:", data);
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -98,9 +110,14 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
           payload: { content: sections[currentIdx]?.full || topic } 
         }),
       });
+      if (!res.ok) throw new Error('Challenge generation failed');
       const data = await res.json();
-      setChallenge(data);
-      setShowChallenge(true);
+      if (data && data.question && Array.isArray(data.options)) {
+        setChallenge(data);
+        setShowChallenge(true);
+      } else {
+        console.error("Invalid challenge format:", data);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -119,31 +136,79 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
   };
 
   const handleNext = async () => {
-    if (currentIdx < sections.length - 1) {
-      setCompletedSections(prev => [...prev, currentSection.id]);
-      setCurrentIdx(prev => prev + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      // Start Final Recap Quiz
-      setLoading(true);
-      try {
-         const res = await fetch('/api/generate', {
+    if (currentStage === 'SECTIONS') {
+      if (currentIdx < sections.length - 1) {
+        setCompletedSections(prev => [...prev, currentSection.id]);
+        setCurrentIdx(prev => prev + 1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        // Move to Thought Process stage
+        setLoading(true);
+        try {
+          const res = await fetch('/api/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-               action: 'GENERATE_RECAP_QUIZ', 
-               payload: { topic, sections } 
-            }),
-         });
-         const data = await res.json();
-         setRecapQuestions(data);
-         setRecapIdx(0);
-         setInRecapMode(true);
+            body: JSON.stringify({ action: 'GENERATE_THOUGHT_PROCESS', payload: { topic } }),
+          });
+          const data = await res.json();
+          setThoughtProcess(data.process || "AI logic calibrated for maximum retention.");
+          setCurrentStage('THOUGHT');
+        } catch (e) {
+          setCurrentStage('FLASHCARDS'); // Fallback
+        } finally {
+          setLoading(false);
+        }
+      }
+    } else if (currentStage === 'THOUGHT') {
+      // Move to Flashcards stage
+      setLoading(true);
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'GENERATE_FLASHCARDS', payload: { topic } }),
+        });
+        const data = await res.json();
+        setFlashcards(data || []);
+        setCurrentStage('FLASHCARDS');
       } catch (e) {
-         console.error(e);
-         onFinish({ sections, attention, stats });
+        setLoading(false);
+        handleNext(); // Skip to next
       } finally {
-         setLoading(false);
+        setLoading(false);
+      }
+    } else if (currentStage === 'FLASHCARDS') {
+      if (flashcardIdx < flashcards.length - 1) {
+        setFlashcardIdx(prev => prev + 1);
+        setFlipped(false);
+      } else {
+        // Start Final Recap Quiz
+        setLoading(true);
+        try {
+           const res = await fetch('/api/generate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                 action: 'GENERATE_RECAP_QUIZ', 
+                 payload: { topic, sections } 
+              }),
+           });
+           if (!res.ok) throw new Error('Recap generation failed');
+           const data = await res.json();
+           if (Array.isArray(data) && data.length > 0) {
+              setRecapQuestions(data);
+              setRecapIdx(0);
+              setCurrentStage('QUIZ');
+              setInRecapMode(true);
+           } else {
+              onFinish({ sections, attention, stats });
+           }
+        } catch (e) {
+           console.error(e);
+           onFinish({ sections, attention, stats });
+        } finally {
+           setLoading(false);
+        }
       }
     }
   };
@@ -210,13 +275,13 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
           animate={{ scale: contentFlash ? 0.99 : 1, opacity: contentFlash ? 0.8 : 1 }}
           className="glass-dark p-10 min-h-[400px] flex flex-col relative overflow-hidden"
         >
-          {inRecapMode ? (
+          {currentStage === 'QUIZ' ? (
              <div className="flex-1 flex flex-col items-center justify-center space-y-10 py-10 relative">
                 <div className="text-center space-y-4">
                    <div className="inline-flex items-center gap-2 bg-teal/10 text-teal px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest border border-teal/20">
                       <Target size={14} /> Final Assessment
                    </div>
-                   <h2 className="text-4xl font-black text-white italic">RECAP <span className="text-teal">SIMULATION</span></h2>
+                   <h2 className="text-4xl font-black text-white italic">COMPEHENSIVE <span className="text-teal">QUIZ</span></h2>
                    <p className="text-white/40 font-bold uppercase tracking-widest text-[10px]">Question {recapIdx + 1} of {recapQuestions.length}</p>
                 </div>
 
@@ -247,6 +312,56 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
                    <Brain size={280} className="text-teal" />
                 </div>
              </div>
+          ) : currentStage === 'THOUGHT' ? (
+            <div className="flex-1 flex flex-col items-center justify-center space-y-8 text-center">
+              <div className="p-4 bg-purple-500/10 rounded-full text-purple-400">
+                <Brain size={48} />
+              </div>
+              <h2 className="text-3xl font-black text-white italic tracking-tight">AI <span className="text-purple-400">THOUGHT PROCESS</span></h2>
+              <div className="max-w-xl text-lg text-white/70 leading-relaxed bg-white/5 p-8 rounded-3xl border border-white/10 italic">
+                "{thoughtProcess}"
+              </div>
+              <button 
+                onClick={handleNext}
+                className="bg-purple-500 text-white font-black px-10 py-5 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-glow-purple uppercase tracking-widest text-xs"
+              >
+                Continue to Flashcards
+              </button>
+            </div>
+          ) : currentStage === 'FLASHCARDS' ? (
+            <div className="flex-1 flex flex-col items-center justify-center space-y-12 py-10">
+              <div className="text-center space-y-2">
+                <h2 className="text-3xl font-black text-white tracking-tight">ACTIVE <span className="text-teal">RECALL</span></h2>
+                <p className="text-white/40 font-bold uppercase tracking-widest text-[10px]">Card {flashcardIdx + 1} of {flashcards.length}</p>
+              </div>
+
+              <motion.div 
+                className="relative w-full max-w-md aspect-[3/2] cursor-pointer perspective-1000"
+                onClick={() => setFlipped(!flipped)}
+              >
+                <motion.div 
+                  className="w-full h-full relative transition-all duration-700 preserve-3d"
+                  animate={{ rotateY: flipped ? 180 : 0 }}
+                >
+                  {/* Front */}
+                  <div className="absolute inset-0 backface-hidden glass-dark border border-white/10 rounded-3xl flex items-center justify-center p-12 text-center">
+                    <p className="text-2xl font-bold text-white">{flashcards[flashcardIdx]?.front}</p>
+                    <div className="absolute bottom-6 text-[10px] text-white/20 font-black uppercase tracking-[0.2em]">Click to Flip</div>
+                  </div>
+                  {/* Back */}
+                  <div className="absolute inset-0 backface-hidden glass-dark border border-teal/40 rounded-3xl flex items-center justify-center p-12 text-center rotate-y-180 bg-teal/5">
+                    <p className="text-xl font-medium text-teal">{flashcards[flashcardIdx]?.back}</p>
+                  </div>
+                </motion.div>
+              </motion.div>
+
+              <button 
+                onClick={handleNext}
+                className="bg-white text-background font-black px-10 py-5 rounded-2xl hover:scale-105 active:scale-95 transition-all uppercase tracking-widest text-xs"
+              >
+                {flashcardIdx < flashcards.length - 1 ? 'Next Card' : 'Final Quiz'}
+              </button>
+            </div>
           ) : (
             <>
               {/* Adaptation Badge */}
@@ -321,7 +436,7 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
                   onClick={handleNext}
                   className="bg-white text-background font-bold px-8 py-4 rounded-xl flex items-center gap-3 transition-all hover:bg-teal hover:text-white"
                 >
-                  {currentIdx < sections.length - 1 ? 'Next Section' : 'Finish Session'}
+                  {currentIdx < sections.length - 1 ? 'Next Section' : 'View Thought Process'}
                   <ChevronRight size={20} />
                 </motion.button>
               </div>

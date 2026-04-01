@@ -16,7 +16,7 @@ interface Item {
   id: string;
   name: string;
   price: number;
-  type: 'THEME' | 'FONT' | 'BACKDROP';
+  type: 'THEME' | 'FONT' | 'BACKDROP' | 'POMO_BG' | 'POMO_BTN';
   rarity: 'COMMON' | 'RARE' | 'EPIC' | 'LEGENDARY';
   preview: string;
 }
@@ -25,24 +25,46 @@ interface MarketplaceProps {
   coins: number;
   unlockedItems: string[];
   activeTheme: string;
+  activeFont: string;
+  activeBackdrop: string;
+  activePomoBg: string;
+  activePomoBtn: string;
   onPurchase: (price: number, id: string) => boolean;
   onEquip: (id: string, type: string) => void;
 }
 
 export const Marketplace: React.FC<MarketplaceProps> = ({ 
-  coins, unlockedItems, activeTheme, onPurchase, onEquip 
+  coins, unlockedItems, activeTheme, activeFont, activeBackdrop, activePomoBg, activePomoBtn, onPurchase, onEquip 
 }) => {
-  const [filter, setFilter] = useState<'ALL' | 'THEME' | 'FONT' | 'BACKDROP'>('ALL');
+  const [filter, setFilter] = useState<'ALL' | 'THEME' | 'BACKDROP' | 'FONT' | 'POMO_BG' | 'POMO_BTN'>('ALL');
 
   const shopItems: Item[] = [
-    { id: 'neon-cyber', name: 'Cyber Neon Theme', price: 250, type: 'THEME', rarity: 'RARE', preview: 'bg-blue/20' },
-    { id: 'lava-volcano', name: 'Volcanic Core Theme', price: 500, type: 'THEME', rarity: 'EPIC', preview: 'bg-red/20' },
-    { id: 'deep-sea', name: 'Abyssal Deep Theme', price: 350, type: 'THEME', rarity: 'RARE', preview: 'bg-cyan-900/40' },
-    { id: 'monochrome', name: 'Ghost Monochrome', price: 100, type: 'THEME', rarity: 'COMMON', preview: 'bg-white/10' },
-    { id: 'orbitron-font', name: 'Orbitron Timer Font', price: 150, type: 'FONT', rarity: 'RARE', preview: 'font-mono italic' },
-    { id: 'matrix-font', name: 'Emerald Matrix Font', price: 400, type: 'FONT', rarity: 'EPIC', preview: 'text-green-500 font-mono' },
-    { id: 'inter-stellar', name: 'Interstellar Backdrop', price: 800, type: 'BACKDROP', rarity: 'LEGENDARY', preview: 'opacity-50 blur-lg' },
-    { id: 'nebula-sky', name: 'Orion Nebula Backdrop', price: 1200, type: 'BACKDROP', rarity: 'LEGENDARY', preview: 'bg-purple-900/20' },
+    // Stitch Inspired Themes
+    { id: 'zen-sanctuary', name: 'Zen Minimalist', price: 600, type: 'THEME', rarity: 'EPIC', preview: 'bg-[#446349]/40' },
+    { id: 'neural-cinematic', name: 'FlowIQ Cinematic', price: 800, type: 'THEME', rarity: 'LEGENDARY', preview: 'bg-[#10131b] border-[#71ffe8]/30' },
+    { id: 'obsidian-hud', name: 'Deep Focus Obsidian', price: 500, type: 'THEME', rarity: 'EPIC', preview: 'bg-[#121315] border-[#8B5CF6]/30' },
+    { id: 'editorial-silk', name: 'Editorial Silk', price: 750, type: 'THEME', rarity: 'EPIC', preview: 'bg-[#0f141a] border-[#f1c97d]/30' },
+    { id: 'oracle-architect', name: 'Oracle Architect', price: 950, type: 'THEME', rarity: 'LEGENDARY', preview: 'bg-[#0A0E14] border-[#00F2FF]/30 shadow-[0_0_20px_rgba(0,242,255,0.2)]' },
+    
+    // Stitch Inspired Fonts
+    { id: 'newsreader-font', name: 'Editorial Serif', price: 200, type: 'FONT', rarity: 'RARE', preview: 'font-serif text-2xl' },
+    { id: 'space-grotesk-font', name: 'Cinematic Sans', price: 300, type: 'FONT', rarity: 'RARE', preview: 'font-sans text-xl tracking-tight' },
+    { id: 'jetbrains-mono-font', name: 'Cognitive Mono', price: 400, type: 'FONT', rarity: 'EPIC', preview: 'font-mono text-lg' },
+
+    // Stitch Inspired Backdrops
+    { id: 'sanctuary-backdrop', name: 'Zen Sanctuary', price: 350, type: 'BACKDROP', rarity: 'RARE', preview: 'bg-emerald-950/20' },
+    { id: 'neural-flow-backdrop', name: 'Neural Flow', price: 700, type: 'BACKDROP', rarity: 'EPIC', preview: 'bg-indigo-900/30' },
+    { id: 'obsidian-void-backdrop', name: 'Obsidian Void', price: 900, type: 'BACKDROP', rarity: 'LEGENDARY', preview: 'bg-zinc-950' },
+
+    // Pomodoro Backgrounds
+    { id: 'zen-garden', name: 'Zen Garden Pomo', price: 300, type: 'POMO_BG', rarity: 'RARE', preview: 'bg-green-900/20' },
+    { id: 'cyber-city', name: 'Cyberpunk Skyline', price: 600, type: 'POMO_BG', rarity: 'EPIC', preview: 'bg-purple-900/30' },
+    { id: 'deep-space', name: 'Deep Space Void', price: 1000, type: 'POMO_BG', rarity: 'LEGENDARY', preview: 'bg-black' },
+    
+    // Pomodoro Buttons
+    { id: 'neon-pulse', name: 'Neon Pulse Buttons', price: 200, type: 'POMO_BTN', rarity: 'RARE', preview: 'border-blue shadow-blue' },
+    { id: 'gold-plating', name: 'Gold Plated Control', price: 450, type: 'POMO_BTN', rarity: 'EPIC', preview: 'border-amber-500 shadow-amber-500' },
+    { id: 'plasma-core', name: 'Plasma Core Switch', price: 750, type: 'POMO_BTN', rarity: 'LEGENDARY', preview: 'bg-red/20 shadow-red' },
   ];
 
   const filteredItems = filter === 'ALL' ? shopItems : shopItems.filter(i => i.type === filter);
@@ -72,7 +94,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       </div>
 
       <div className="flex items-center gap-4 bg-white/5 p-2 rounded-2xl w-fit border border-white/5">
-        {(['ALL', 'THEME', 'FONT', 'BACKDROP'] as const).map((cat) => (
+        {(['ALL', 'THEME', 'BACKDROP', 'FONT', 'POMO_BG', 'POMO_BTN'] as const).map((cat) => (
            <button
              key={cat}
              onClick={() => setFilter(cat)}
@@ -81,7 +103,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                 filter === cat ? "bg-white/5 text-white border border-white/10" : "text-white/30 hover:text-white/60"
              )}
            >
-             {cat}
+             {cat.replace('_', ' ')}
            </button>
         ))}
       </div>
@@ -90,7 +112,12 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         <AnimatePresence mode="popLayout">
           {filteredItems.map((item, i) => {
             const isUnlocked = unlockedItems.includes(item.id);
-            const isActive = activeTheme === item.id;
+            const isActive = 
+              item.type === 'POMO_BG' ? activePomoBg === item.id :
+              item.type === 'POMO_BTN' ? activePomoBtn === item.id :
+              item.type === 'FONT' ? activeFont === item.id :
+              item.type === 'BACKDROP' ? activeBackdrop === item.id :
+              activeTheme === item.id;
             
             return (
               <motion.div
@@ -106,6 +133,8 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                    {item.type === 'THEME' && <Palette size={48} className="text-white/20" />}
                    {item.type === 'FONT' && <Type size={48} className="text-white/20" />}
                    {item.type === 'BACKDROP' && <ImageIcon size={48} className="text-white/20" />}
+                   {item.type === 'POMO_BG' && <Sparkles size={48} className="text-white/20" />}
+                   {item.type === 'POMO_BTN' && <Zap size={48} className="text-white/20" />}
                 </div>
 
                 <div className="flex-1 space-y-2 mb-6">
@@ -115,7 +144,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                          item.rarity === 'LEGENDARY' ? "bg-amber-500 text-background" : 
                          item.rarity === 'EPIC' ? "bg-purple-500 text-white" : "bg-white/10 text-white/40"
                       )}>{item.rarity}</span>
-                      <span className="text-[10px] font-black uppercase text-white/20 tracking-widest">{item.type}</span>
+                      <span className="text-[10px] font-black uppercase text-white/20 tracking-widest">{item.type.replace('_', ' ')}</span>
                    </div>
                    <h3 className="text-lg font-bold text-white group-hover:text-amber-500 transition-colors">{item.name}</h3>
                 </div>
