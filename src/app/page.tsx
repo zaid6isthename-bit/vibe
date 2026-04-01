@@ -69,30 +69,7 @@ export default function NeuroOS() {
 
   return (
     <main className={cn("flex h-screen text-foreground selection:bg-blue selection:text-background relative overflow-hidden", getFontClass())}>
-      {/* Dynamic Theme Engine */}
-      <AnimatePresence shadow-none>
-        {activeTheme === 'zen-sanctuary' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 pointer-events-none z-[5] bg-zen-sanctuary opacity-40" />
-        )}
-        {activeTheme === 'neural-cinematic' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 pointer-events-none z-[5] bg-neural-flow opacity-60 backdrop-blur-3xl" />
-        )}
-        {activeTheme === 'obsidian-hud' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 pointer-events-none z-[5] bg-obsidian-void opacity-50" />
-        )}
-        {activeTheme === 'lava-volcano' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 pointer-events-none z-[5] bg-[radial-gradient(circle_at_50%_120%,#450a0a_0%,transparent_70%)] opacity-60" />
-        )}
-        {activeTheme === 'neon-cyber' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 pointer-events-none z-[5] bg-[radial-gradient(circle_at_50%_-20%,#1e3a8a_0%,transparent_70%)] opacity-40 animate-pulse" />
-        )}
-        {activeTheme === 'editorial-silk' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 pointer-events-none z-[5] bg-[#0f141a]/60 backdrop-blur-3xl" />
-        )}
-        {activeTheme === 'oracle-architect' && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 pointer-events-none z-[5] bg-[#0A0E14]/80 backdrop-blur-xl" />
-        )}
-      </AnimatePresence>
+      {/* UI Layer */}
 
       <AnimatePresence>
         {!mounted ? (
