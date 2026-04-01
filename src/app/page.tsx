@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
@@ -9,9 +9,8 @@ import { DecisionsPanel } from '@/components/DecisionsPanel';
 import { ExecutionEngine } from '@/components/ExecutionEngine';
 import { Marketplace } from '@/components/Marketplace';
 import { useNeuroWallet } from '@/hooks/use-neuro-wallet';
-import Prism from '@/components/Prism';
-import { Brain, Cpu, ShieldCheck, Zap, BarChart3, HelpCircle, ShoppingBag, Clock } from 'lucide-react';
 import { PomodoroTimer } from '@/components/PomodoroTimer';
+import { BarChart3, Zap } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -30,7 +29,7 @@ export default function NeuroOS() {
   const { 
     coins, streak, unlockedItems, 
     activeTheme, activeFont, activeBackdrop, activePomoBg, activePomoBtn,
-    addCoins, spendCoins, updateStreak, setTheme, setEquipped 
+    addCoins, spendCoins, updateStreak, setEquipped 
   } = useNeuroWallet();
 
   // Fix Hydration Mismatch
@@ -43,13 +42,14 @@ export default function NeuroOS() {
   };
 
   const handleStudyStart = (topic: string) => {
-    setStudyTopic(topic);
+    if (!topic.trim()) return;
+    setStudyTopic(topic.trim());
     handleTabChange('STUDY');
   };
 
   const handleStudyFinish = (stats: any) => {
     const earned = Math.round((stats.attention?.score || 0) * 0.5 + (stats.stats?.correctChallenges || 0) * 10);
-    addCoins(earned);
+    addCoins(Math.max(10, earned)); // Minimum 10 nC per session
     updateStreak(streak + 1);
     handleTabChange('DASHBOARD');
   };
@@ -69,8 +69,6 @@ export default function NeuroOS() {
 
   return (
     <main className={cn("flex h-screen text-foreground selection:bg-blue selection:text-background relative overflow-hidden", getFontClass())}>
-      {/* UI Layer */}
-
       <AnimatePresence>
         {!mounted ? (
           <motion.div 
@@ -90,7 +88,7 @@ export default function NeuroOS() {
             {/* OS Layout */}
             <Sidebar activeTab={activeTab} onTabChange={handleTabChange} coins={coins} />
 
-            {/* Main Workspace with Proper Scrolling Parent */}
+            {/* Main Workspace */}
             <div className="flex-1 flex flex-col h-screen relative z-30 overflow-hidden">
                <div className="flex-1 w-full overflow-y-auto custom-scrollbar overflow-x-hidden">
                   <AnimatePresence mode="wait">
@@ -102,7 +100,12 @@ export default function NeuroOS() {
                         transition={{ duration: 0.4, ease: [0.19, 1, 0.22, 1] }}
                         className="w-full min-h-full flex flex-col"
                      >
-                        {activeTab === 'DASHBOARD' && <Dashboard onModuleStart={handleTabChange} />}
+                        {activeTab === 'DASHBOARD' && (
+                          <Dashboard 
+                            onModuleStart={handleTabChange} 
+                            onStudyStart={handleStudyStart}
+                          />
+                        )}
                         
                         {activeTab === 'STUDY' && (
                            <div className="w-full p-12">
@@ -115,16 +118,16 @@ export default function NeuroOS() {
                                     <div className="w-full max-w-2xl flex items-center bg-white/5 border border-white/10 p-2 rounded-3xl focus-within:ring-1 focus-within:ring-blue/50 transition-all shadow-2xl backdrop-blur-3xl">
                                        <input 
                                           type="text" 
-                                          placeholder="E.g. Bio-Luminescence" 
+                                          placeholder="E.g. Semiconductors, Behavioral Economics..." 
                                           className="flex-1 bg-transparent border-none outline-none text-2xl font-bold py-6 px-10 text-white placeholder:text-white/10"
                                           onKeyDown={(e) => {
                                              if (e.key === 'Enter') handleStudyStart((e.target as HTMLInputElement).value);
                                           }}
                                        />
                                        <button 
-                                          onClick={() => {
-                                             const val = (document.querySelector('input') as HTMLInputElement).value;
-                                             handleStudyStart(val || 'General Intelligence');
+                                          onClick={(e) => {
+                                             const input = (e.currentTarget.closest('div') as HTMLElement).querySelector('input') as HTMLInputElement;
+                                             handleStudyStart(input?.value || 'General Intelligence');
                                           }}
                                           className="bg-blue text-background font-black px-12 py-6 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-glow-blue uppercase tracking-widest text-xs"
                                        >
@@ -133,14 +136,24 @@ export default function NeuroOS() {
                                     </div>
                                  </div>
                               ) : (
-                                 <LearningArea topic={studyTopic} onFinish={handleStudyFinish} />
+                                 <LearningArea 
+                                   topic={studyTopic} 
+                                   onFinish={(stats) => {
+                                     setStudyTopic(''); // Reset so user can start fresh next time
+                                     handleStudyFinish(stats);
+                                   }} 
+                                 />
                               )}
                            </div>
                         )}
 
                         {activeTab === 'POMODORO' && (
                            <div className="w-full flex-1 flex items-center justify-center p-12">
-                              <PomodoroTimer onSessionComplete={() => addCoins(100)} />
+                              <PomodoroTimer 
+                                activePomoBg={activePomoBg}
+                                activePomoBtn={activePomoBtn}
+                                onSessionComplete={() => addCoins(100)} 
+                              />
                            </div>
                         )}
 
@@ -150,6 +163,7 @@ export default function NeuroOS() {
                         {activeTab === 'MARKET' && (
                            <Marketplace 
                               coins={coins} 
+                              streak={streak}
                               unlockedItems={unlockedItems} 
                               activeTheme={activeTheme} 
                               activeFont={activeFont}
@@ -164,9 +178,19 @@ export default function NeuroOS() {
                         {activeTab === 'INSIGHTS' && (
                            <div className="flex-1 flex flex-col items-center justify-center space-y-8 min-h-[80vh]">
                               <BarChart3 size={80} className="text-blue/30 animate-pulse" />
-                              <div className="text-center space-y-2">
-                                 <h3 className="text-3xl font-black font-display text-white">Neural Metrics Aggregate</h3>
-                                 <p className="text-white/40 text-sm font-bold uppercase tracking-widest">Active session required for throughput analysis.</p>
+                              <div className="text-center space-y-4 max-w-md">
+                                 <h3 className="text-3xl font-black font-display text-white">Neural Metrics</h3>
+                                 <div className="grid grid-cols-2 gap-4 text-left">
+                                   <div className="glass p-6 border-white/5">
+                                     <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-1">Sessions</p>
+                                     <p className="text-2xl font-black text-blue">{streak}</p>
+                                   </div>
+                                   <div className="glass p-6 border-white/5">
+                                     <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-1">Credits</p>
+                                     <p className="text-2xl font-black text-amber-500">{coins} nC</p>
+                                   </div>
+                                 </div>
+                                 <p className="text-white/40 text-sm font-bold uppercase tracking-widest">Complete study sessions to populate your intelligence profile.</p>
                               </div>
                            </div>
                         )}
@@ -190,7 +214,6 @@ export default function NeuroOS() {
           </motion.div>
         )}
       </AnimatePresence>
-
     </main>
   );
 }

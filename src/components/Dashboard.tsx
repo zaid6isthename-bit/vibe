@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Zap, Brain, Target, Shield, Clock, BookOpen, Scale, Cpu, Search, Sparkles, TrendingUp, ChevronRight 
+  Zap, Brain, Target, Shield, Clock, BookOpen, Scale, Cpu, ChevronRight, Sparkles, TrendingUp 
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -14,15 +14,12 @@ function cn(...inputs: ClassValue[]) {
 
 interface DashboardProps {
   onModuleStart: (tab: any) => void;
+  onStudyStart: (topic: string) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onModuleStart }) => {
-  const [stats, setStats] = useState({
-    focusScore: 88,
-    retention: 72,
-    clarity: 64,
-    execution: 42
-  });
+export const Dashboard: React.FC<DashboardProps> = ({ onModuleStart, onStudyStart }) => {
+  const [searchValue, setSearchValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const cards = [
     { title: 'Focus Flow', value: '88', unit: '%', color: 'text-blue', icon: Brain, status: 'Strong', desc: 'Sustained attention for 45m' },
@@ -30,6 +27,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onModuleStart }) => {
     { title: 'Goal Clarity', value: '64', unit: '%', color: 'text-purple-400', icon: Scale, status: 'Improving', desc: 'Awaiting decision finality' },
     { title: 'Execution Momentum', value: '42', unit: '%', color: 'text-amber-500', icon: Zap, status: 'Needs Action', desc: '3 tasks pending in engine' },
   ];
+
+  const handleSearch = () => {
+    if (searchValue.trim()) {
+      onStudyStart(searchValue.trim());
+    }
+  };
 
   return (
     <div className="w-full flex-1 flex flex-col p-12 overflow-y-auto space-y-12">
@@ -43,25 +46,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ onModuleStart }) => {
              <Shield size={14} /> Neural Interface Active
            </motion.div>
            <h2 className="text-6xl font-black font-display tracking-tight text-white leading-tight">
-             Good morning, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue to-purple-400">Student Alpha</span>.
+             Good evening, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue to-purple-400">Student Alpha</span>.
            </h2>
            <p className="text-xl text-white/40 max-w-xl font-medium tracking-wide">
              NeuroOS has optimized your cognitive pathway. Today looks focused.
            </p>
         </div>
         
-        <div className="flex items-center gap-4 bg-white/5 border border-white/10 p-2 rounded-2xl group transition-all hover:bg-white/10 cursor-pointer">
-           <div className="p-4 bg-white/5 rounded-xl text-white/40 group-hover:text-blue transition-colors">
-              <Search size={22} />
+        {/* Connected Search Bar */}
+        <div className="flex items-center gap-4 bg-white/5 border border-white/10 p-2 rounded-2xl group transition-all hover:bg-white/10 focus-within:ring-1 focus-within:ring-blue/30 cursor-pointer">
+           <div className="p-4 bg-white/5 rounded-xl text-white/40 group-hover:text-blue group-focus-within:text-blue transition-colors">
+              <BookOpen size={22} />
            </div>
            <input 
+              ref={inputRef}
               type="text" 
+              value={searchValue}
+              onChange={e => setSearchValue(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSearch()}
               placeholder="What do you want to master today?" 
-              className="bg-transparent border-none outline-none text-lg text-white font-bold placeholder:text-white/20 w-80"
+              className="bg-transparent border-none outline-none text-lg text-white font-bold placeholder:text-white/20 w-72"
            />
-           <div className="p-4 bg-blue rounded-xl text-background font-black shadow-[0_0_20px_rgba(0,209,255,0.3)] hover:scale-105 active:scale-95 transition-all">
+           <button
+             onClick={handleSearch}
+             className={cn(
+               "p-4 bg-blue rounded-xl text-background font-black shadow-[0_0_20px_rgba(0,209,255,0.3)] hover:scale-105 active:scale-95 transition-all",
+               !searchValue.trim() && "opacity-40 cursor-not-allowed"
+             )}
+           >
               <ChevronRight size={22} />
-           </div>
+           </button>
         </div>
       </div>
 
@@ -131,10 +145,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onModuleStart }) => {
                    border: 'border-amber-500/20'
                  },
                  { 
-                   title: 'Test Understanding', 
-                   desc: 'Active recall & memory system for concept mastery.', 
-                   icon: Target, 
-                   tab: 'STUDY', 
+                   title: 'Start Pomodoro Session', 
+                   desc: 'Adaptive focus timer. Earn 100 nC per completed cycle.', 
+                   icon: Clock, 
+                   tab: 'POMODORO', 
                    color: 'from-teal/20 to-transparent',
                    border: 'border-teal/20'
                  },
@@ -198,13 +212,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onModuleStart }) => {
                        <span className="text-[10px] uppercase font-black text-white/60 tracking-widest">Cognitive Suggestion</span>
                     </div>
                     <p className="text-xs text-white/60 leading-relaxed font-bold italic">
-                       "Alpha, your retention tends to drop after 30 mins of deep work. Switch to Story adaptation mode during your next session to recover."
+                       {"\"Alpha, your retention tends to drop after 30 mins of deep work. Switch to Story adaptation mode during your next session to recover.\""}
                     </p>
                     <motion.button 
                        whileHover={{ x: 5 }}
+                       onClick={() => onModuleStart('STUDY')}
                        className="text-[10px] font-black text-blue uppercase tracking-widest flex items-center gap-2"
                     >
-                       Apply Optimization <ChevronRight size={14} />
+                       Start Study Session <ChevronRight size={14} />
                     </motion.button>
                  </div>
               </div>

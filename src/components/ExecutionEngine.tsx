@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from 'react';
-import { motion, Reorder, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Plus, CheckCircle2, Circle, AlertCircle, Zap, TrendingUp, Cpu, Calendar, Clock, ChevronRight, BarChart3, Flag, Play, Trash2 
+  Plus, CheckCircle2, AlertCircle, Zap, TrendingUp, Cpu, Clock, BarChart3, Flag, Play, Trash2 
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -28,26 +28,30 @@ export const ExecutionEngine: React.FC = () => {
   ]);
 
   const [momentum, setMomentum] = useState(42);
-  const [loading, setLoading] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [showInput, setShowInput] = useState(false);
 
   const addTask = (title: string) => {
+    if (!title.trim()) return;
     const newTask: Task = {
       id: Math.random().toString(36).substr(2, 9),
-      title,
+      title: title.trim(),
       status: 'TODO',
       priority: 'HIGH',
       eta: '1h'
     };
-    setTasks([newTask, ...tasks]);
+    setTasks(prev => [newTask, ...prev]);
+    setNewTaskTitle('');
+    setShowInput(false);
   };
 
   const updateStatus = (id: string, status: Task['status']) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, status } : t));
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t));
     if (status === 'DONE') setMomentum(prev => Math.min(100, prev + 5));
   };
 
   const deleteTask = (id: string) => {
-    setTasks(tasks.filter(t => t.id !== id));
+    setTasks(prev => prev.filter(t => t.id !== id));
     setMomentum(prev => Math.max(0, prev - 2));
   };
 
@@ -56,6 +60,9 @@ export const ExecutionEngine: React.FC = () => {
     { id: 'DOING', label: 'Active Process', color: 'text-amber-500' },
     { id: 'DONE', label: 'Completed', color: 'text-teal' },
   ];
+
+  const doneTasks = tasks.filter(t => t.status === 'DONE').length;
+  const totalTasks = tasks.length;
 
   return (
     <div className="w-full flex-1 flex flex-col p-12 overflow-y-auto space-y-12">
@@ -85,30 +92,61 @@ export const ExecutionEngine: React.FC = () => {
              </div>
              
              <button 
-                onClick={() => addTask('New Task Concept ' + (tasks.length + 1))}
+                onClick={() => setShowInput(true)}
                 className="bg-amber-500 text-white font-black px-8 py-4 rounded-2xl flex items-center gap-2 shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:scale-105 active:scale-95 transition-all text-sm uppercase tracking-widest"
              >
-                <Plus size={18} /> Add Component
+                <Plus size={18} /> Add Task
              </button>
           </div>
        </div>
+
+       {/* New Task Input */}
+       <AnimatePresence>
+         {showInput && (
+           <motion.div
+             initial={{ opacity: 0, y: -10 }}
+             animate={{ opacity: 1, y: 0 }}
+             exit={{ opacity: 0, y: -10 }}
+             className="flex items-center gap-4 bg-white/5 border border-amber-500/30 p-4 rounded-2xl"
+           >
+             <input
+               autoFocus
+               type="text"
+               value={newTaskTitle}
+               onChange={e => setNewTaskTitle(e.target.value)}
+               onKeyDown={e => {
+                 if (e.key === 'Enter') addTask(newTaskTitle);
+                 if (e.key === 'Escape') { setShowInput(false); setNewTaskTitle(''); }
+               }}
+               placeholder="Describe the task or milestone..."
+               className="flex-1 bg-transparent border-none outline-none text-lg font-bold text-white placeholder:text-white/20 px-2"
+             />
+             <button onClick={() => addTask(newTaskTitle)} className="bg-amber-500 text-white font-black px-6 py-3 rounded-xl text-xs uppercase tracking-widest hover:scale-105 transition-all">
+               ADD
+             </button>
+             <button onClick={() => { setShowInput(false); setNewTaskTitle(''); }} className="text-white/20 hover:text-white text-xs font-black uppercase tracking-widest px-4 py-3">
+               Cancel
+             </button>
+           </motion.div>
+         )}
+       </AnimatePresence>
 
        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
           {columns.map((col) => (
              <div key={col.id} className="flex flex-col space-y-6">
                 <div className="flex items-center justify-between px-4">
                    <div className="flex items-center gap-3 font-black uppercase tracking-widest text-xs">
-                      <div className={cn("w-1.5 h-1.5 rounded-full", col.color.replace('text-', 'bg-'))} />
+                      <div className={cn("w-1.5 h-1.5 rounded-full", col.color.replace('text-', 'bg-').replace('/40', ''))} />
                       <span className={col.color}>{col.label}</span>
                    </div>
                    <span className="text-[10px] font-black text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-                      {tasks.filter(t => t.id === col.id).length}
+                      {tasks.filter(t => t.status === col.id).length}
                    </span>
                 </div>
 
                 <div className="flex-1 space-y-4 min-h-[400px]">
                    <AnimatePresence mode="popLayout">
-                      {tasks.filter(t => t.id === col.id).map((task) => (
+                      {tasks.filter(t => t.status === col.id).map((task) => (
                          <motion.div
                             key={task.id}
                             layout
@@ -144,7 +182,7 @@ export const ExecutionEngine: React.FC = () => {
                                   </div>
                                   <div className="w-px h-3 bg-white/5" />
                                   <div className="flex items-center gap-1">
-                                     <Flag size={12} /> Milestone 0{tasks.indexOf(task) + 1}
+                                     <Flag size={12} /> {col.label}
                                   </div>
                                </div>
 
@@ -152,7 +190,7 @@ export const ExecutionEngine: React.FC = () => {
                                   {col.id === 'TODO' && (
                                      <button 
                                         onClick={() => updateStatus(task.id, 'DOING')}
-                                        className="p-3 bg-white/5 text-white/40 rounded-xl hover:bg-amber-500 hover:text-white transition-all shadow-glow"
+                                        className="p-3 bg-white/5 text-white/40 rounded-xl hover:bg-amber-500 hover:text-white transition-all"
                                      >
                                         <Play size={16} fill="currentColor" />
                                      </button>
@@ -160,7 +198,7 @@ export const ExecutionEngine: React.FC = () => {
                                   {col.id === 'DOING' && (
                                      <button 
                                         onClick={() => updateStatus(task.id, 'DONE')}
-                                        className="p-3 bg-teal/10 text-teal rounded-xl hover:bg-teal hover:text-background transition-all shadow-glow"
+                                        className="p-3 bg-teal/10 text-teal rounded-xl hover:bg-teal hover:text-background transition-all"
                                      >
                                         <CheckCircle2 size={16} />
                                      </button>
@@ -168,7 +206,7 @@ export const ExecutionEngine: React.FC = () => {
                                </div>
                             </div>
 
-                            {/* Momentum Progress Line */}
+                            {/* Progress bar for active tasks */}
                             {col.id === 'DOING' && (
                                <motion.div 
                                   initial={{ width: 0 }}
@@ -179,6 +217,18 @@ export const ExecutionEngine: React.FC = () => {
                             )}
                          </motion.div>
                       ))}
+
+                      {tasks.filter(t => t.status === col.id).length === 0 && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="h-32 flex items-center justify-center border border-dashed border-white/5 rounded-2xl"
+                        >
+                          <p className="text-[10px] font-black uppercase tracking-widest text-white/10">
+                            {col.id === 'TODO' ? 'Add tasks above' : col.id === 'DOING' ? 'Move tasks here to start' : 'Complete tasks to log them'}
+                          </p>
+                        </motion.div>
+                      )}
                    </AnimatePresence>
                 </div>
              </div>
@@ -213,9 +263,13 @@ export const ExecutionEngine: React.FC = () => {
           </div>
 
           <div className="glass-dark p-8 border-white/5 space-y-8 flex flex-col justify-center">
-             <div className="text-center">
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">Throughput Mastery</p>
-                <div className="text-4xl font-black font-display text-white">4.8 <span className="text-white/20 text-xl font-black uppercase">Tasks/Day</span></div>
+             <div className="text-center space-y-2">
+               <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Completion Rate</p>
+               <div className="text-4xl font-black font-display text-white">
+                 {totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0}
+                 <span className="text-white/20 text-xl font-black uppercase">%</span>
+               </div>
+               <p className="text-[10px] text-white/20 font-bold">{doneTasks} of {totalTasks} tasks</p>
              </div>
           </div>
        </div>

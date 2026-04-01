@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ShoppingBag, Star, Lock, CheckCircle2, Coins, Palette, Type, Image as ImageIcon, Sparkles, Zap, ChevronRight, Info 
+  ShoppingBag, Star, Lock, CheckCircle2, Coins, Palette, Type, Image as ImageIcon, Sparkles, Zap, ChevronRight 
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -23,6 +23,7 @@ interface Item {
 
 interface MarketplaceProps {
   coins: number;
+  streak: number;
   unlockedItems: string[];
   activeTheme: string;
   activeFont: string;
@@ -34,24 +35,25 @@ interface MarketplaceProps {
 }
 
 export const Marketplace: React.FC<MarketplaceProps> = ({ 
-  coins, unlockedItems, activeTheme, activeFont, activeBackdrop, activePomoBg, activePomoBtn, onPurchase, onEquip 
+  coins, streak, unlockedItems, activeTheme, activeFont, activeBackdrop, activePomoBg, activePomoBtn, onPurchase, onEquip 
 }) => {
   const [filter, setFilter] = useState<'ALL' | 'THEME' | 'BACKDROP' | 'FONT' | 'POMO_BG' | 'POMO_BTN'>('ALL');
+  const [notification, setNotification] = useState<string | null>(null);
 
   const shopItems: Item[] = [
-    // Stitch Inspired Themes
+    // Themes
     { id: 'zen-sanctuary', name: 'Zen Minimalist', price: 600, type: 'THEME', rarity: 'EPIC', preview: 'bg-[#446349]/40' },
     { id: 'neural-cinematic', name: 'FlowIQ Cinematic', price: 800, type: 'THEME', rarity: 'LEGENDARY', preview: 'bg-[#10131b] border-[#71ffe8]/30' },
     { id: 'obsidian-hud', name: 'Deep Focus Obsidian', price: 500, type: 'THEME', rarity: 'EPIC', preview: 'bg-[#121315] border-[#8B5CF6]/30' },
     { id: 'editorial-silk', name: 'Editorial Silk', price: 750, type: 'THEME', rarity: 'EPIC', preview: 'bg-[#0f141a] border-[#f1c97d]/30' },
     { id: 'oracle-architect', name: 'Oracle Architect', price: 950, type: 'THEME', rarity: 'LEGENDARY', preview: 'bg-[#0A0E14] border-[#00F2FF]/30 shadow-[0_0_20px_rgba(0,242,255,0.2)]' },
     
-    // Stitch Inspired Fonts
+    // Fonts
     { id: 'newsreader-font', name: 'Editorial Serif', price: 200, type: 'FONT', rarity: 'RARE', preview: 'font-serif text-2xl' },
     { id: 'space-grotesk-font', name: 'Cinematic Sans', price: 300, type: 'FONT', rarity: 'RARE', preview: 'font-sans text-xl tracking-tight' },
     { id: 'jetbrains-mono-font', name: 'Cognitive Mono', price: 400, type: 'FONT', rarity: 'EPIC', preview: 'font-mono text-lg' },
 
-    // Stitch Inspired Backdrops
+    // Backdrops
     { id: 'sanctuary-backdrop', name: 'Zen Sanctuary', price: 350, type: 'BACKDROP', rarity: 'RARE', preview: 'bg-emerald-950/20' },
     { id: 'neural-flow-backdrop', name: 'Neural Flow', price: 700, type: 'BACKDROP', rarity: 'EPIC', preview: 'bg-indigo-900/30' },
     { id: 'obsidian-void-backdrop', name: 'Obsidian Void', price: 900, type: 'BACKDROP', rarity: 'LEGENDARY', preview: 'bg-zinc-950' },
@@ -68,9 +70,35 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
   ];
 
   const filteredItems = filter === 'ALL' ? shopItems : shopItems.filter(i => i.type === filter);
+  const streakProgress = Math.min(streak % 8, 7);
+
+  const handlePurchase = (price: number, id: string) => {
+    const success = onPurchase(price, id);
+    if (!success) {
+      setNotification('Insufficient nC credits!');
+      setTimeout(() => setNotification(null), 2000);
+    } else {
+      setNotification('Item unlocked!');
+      setTimeout(() => setNotification(null), 2000);
+    }
+  };
 
   return (
     <div className="w-full flex-1 flex flex-col p-12 overflow-y-auto space-y-12">
+      {/* Notification Toast */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -20, opacity: 0 }}
+            className="fixed top-6 right-6 z-[100] bg-black/80 backdrop-blur-xl border border-white/10 px-6 py-4 rounded-2xl text-white font-black text-sm shadow-2xl"
+          >
+            {notification}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h2 className="text-4xl font-black font-display text-white italic tracking-tight">
@@ -93,6 +121,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         </motion.div>
       </div>
 
+      {/* Filter Tabs */}
       <div className="flex items-center gap-4 bg-white/5 p-2 rounded-2xl w-fit border border-white/5">
         {(['ALL', 'THEME', 'BACKDROP', 'FONT', 'POMO_BG', 'POMO_BTN'] as const).map((cat) => (
            <button
@@ -108,9 +137,10 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         ))}
       </div>
 
+      {/* Items Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
         <AnimatePresence mode="popLayout">
-          {filteredItems.map((item, i) => {
+          {filteredItems.map((item) => {
             const isUnlocked = unlockedItems.includes(item.id);
             const isActive = 
               item.type === 'POMO_BG' ? activePomoBg === item.id :
@@ -118,6 +148,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
               item.type === 'FONT' ? activeFont === item.id :
               item.type === 'BACKDROP' ? activeBackdrop === item.id :
               activeTheme === item.id;
+            const canAfford = coins >= item.price;
             
             return (
               <motion.div
@@ -163,15 +194,15 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                       </button>
                    ) : (
                       <button 
-                         onClick={() => onPurchase(item.price, item.id)}
+                         onClick={() => handlePurchase(item.price, item.id)}
                          className={cn(
-                            "w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all group/btn bg-amber-500 text-background hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(245,158,11,0.2)]",
-                            coins < item.price && "grayscale opacity-50 cursor-not-allowed"
+                            "w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all bg-amber-500 text-background hover:scale-[1.02] active:scale-95 shadow-[0_0_20px_rgba(245,158,11,0.2)]",
+                            !canAfford && "grayscale opacity-50 cursor-not-allowed hover:scale-100"
                          )}
+                         disabled={!canAfford}
                       >
-                         <Lock size={14} className="group-hover/btn:hidden" />
-                         <span className="group-hover/btn:hidden">Unlock — {item.price} nC</span>
-                         <span className="hidden group-hover/btn:block flex items-center gap-2">Confirm Purchase <ChevronRight size={16} /></span>
+                         <Lock size={14} />
+                         {canAfford ? `Unlock — ${item.price} nC` : `Need ${item.price - coins} more nC`}
                       </button>
                    )}
                 </div>
@@ -181,23 +212,28 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         </AnimatePresence>
       </div>
 
+      {/* Weekly Streak Goal — now wired to real streak */}
       <div className="p-8 rounded-3xl bg-blue/10 border border-blue/20 relative overflow-hidden flex items-center gap-8 group">
          <div className="p-4 bg-blue/20 rounded-2xl text-blue">
             <Star size={32} />
          </div>
          <div className="flex-1">
             <h4 className="text-xl font-bold text-white mb-1 italic">Weekly Strike Goal</h4>
-            <p className="text-sm text-white/40 font-medium">Maintain a <span className="text-blue font-black underline underline-offset-4 decoration-blue/30">7-day study streak</span> to unlock a Legendary mystery loot crate containing 500 nC.</p>
+            <p className="text-sm text-white/40 font-medium">
+              Maintain a <span className="text-blue font-black underline underline-offset-4 decoration-blue/30">7-day study streak</span> to unlock a Legendary mystery loot crate containing 500 nC.
+            </p>
          </div>
-         <div className="flex flex-col items-center">
-            <div className="text-[10px] font-black uppercase text-white/20 tracking-widest mb-1 px-1">Progress</div>
+         <div className="flex flex-col items-center gap-2">
+            <div className="text-[10px] font-black uppercase text-white/20 tracking-widest px-1">
+              Day {streakProgress} / 7
+            </div>
             <div className="flex gap-1.5">
                {Array.from({ length: 7 }).map((_, i) => (
                   <div 
                      key={i} 
                      className={cn(
-                        "w-2.5 h-6 rounded-full border border-white/5",
-                        i < 4 ? "bg-blue animate-pulse" : "bg-white/5"
+                        "w-2.5 h-6 rounded-full border border-white/5 transition-all duration-500",
+                        i < streakProgress ? "bg-blue shadow-[0_0_8px_rgba(0,209,255,0.6)]" : "bg-white/5"
                      )} 
                   />
                ))}

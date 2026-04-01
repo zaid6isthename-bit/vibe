@@ -27,7 +27,13 @@ export const DecisionsPanel: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'DECISION_DEBATE', payload: { topic: decisionTitle } })
       });
+      
       const data = await res.json();
+      
+      if (!res.ok || data.error || !data.breakdown) {
+        throw new Error(data.error || 'Invalid API Response');
+      }
+
       setOutcome(data);
       setActiveStep('DEBATE');
     } catch (e) {

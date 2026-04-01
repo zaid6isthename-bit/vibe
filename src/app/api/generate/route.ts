@@ -235,6 +235,24 @@ export async function POST(req: Request) {
           return NextResponse.json(['Quantum Computing', 'Behavioral Economics', 'Neural Architecture', 'Sustainable Energy']);
        }
        
+       if (action === 'DECISION_DEBATE') {
+          return NextResponse.json({
+             breakdown: { 
+               goal: payload?.topic || "Neural Strategy", 
+               clarity: 85, 
+               options: ["Option Alpha: Stabilize", "Option Beta: Scale", "Option Gamma: Pivot"] 
+             },
+             prosCons: [],
+             debate: [
+               { role: 'Optimist', content: 'This choice aligns with long-term growth trajectories.' },
+               { role: 'Skeptic', content: 'Current resource allocation may not support this complexity.' },
+               { role: 'Judge', content: 'Simulation suggests prioritizing current momentum over new variables.' }
+             ],
+             recommendation: "Stabilize & Refine",
+             confidence: 72
+          });
+       }
+       
        return NextResponse.json({ error: 'AI Offline' }, { status: 500 });
     }
 
