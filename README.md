@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NeuroOS | Cognitive Operating System
 
-## Getting Started
+![NeuroOS Banner](https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?auto=format&fit=crop&q=80&w=1200)
 
-First, run the development server:
+**NeuroOS** is a high-fidelity, attention-aware cognitive environment designed to optimize learning, productivity, and decision-making through an advanced, visually immersive interface.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🔗 Repository
+[https://github.com/zaid6isthename-bit/vibe](https://github.com/zaid6isthename-bit/vibe)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Key Modules
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. **Persistent 3D Prism Environment**
+A high-performance WebGL/OGL shader engine that serves as the visual foundation of the OS.
+- **Dynamic Shader**: Advanced raycasting and mathematical prisms with smooth rotation, 3d-rotation, and hover-responsive inertia.
+- **Global Stability**: Implemented via a persistent root-level layout for zero-flicker transitions.
 
-## Learn More
+### 2. **FlowIQ Study System**
+A data-dense AI learning engine powered by Google Gemini.
+- **Semantic Learning**: High-fidelity modules covering complex subjects like **Semiconductor Band Gaps**, **AI Ethics**, and **Cognitive Science**.
+- **Assessment Engine**: 10-question master quiz system with active recall reinforcement and explanation paths.
 
-To learn more about Next.js, take a look at the following resources:
+### 3. **Neural Market**
+A gamified asset store for high-end cinematic themes and premium fonts derived from modern design systems.
+- **Premium Themes**: Includes *Editorial Silk* (Law-tier prestige) and *Oracle Architect* (Obsidian-void architectural glow).
+- **Stitch Integration**: Assets mapped from curated Stitch design systems for maximum aesthetic fidelity.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 4. **Adaptive Pomodoro Framework**
+A rewarding focus timer that integrates with the OS economy.
+- **nC Rewards**: Each successful 25-minute focus session awards the user **100 nC (Neural Credits)**.
+- **Gamified Productivity**: Tasks and history are persistently tracked to build long-term momentum.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 5. **Decision Copilot & Execution Hub**
+- **Decision Engine**: High-fidelity AI-assisted deliberation logic with debate and trade-off visualization.
+- **Execution Kanban**: A streamlined, cinematic task management board with "Momentum" states.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🏛️ Design System: "Neural Cinematic Theory"
+The project adheres to a strict **No-Line Principle** and **Atmospheric Layering**:
+- **Tonal Borders**: Uses background color shifts (6 tiers) instead of 1px lines.
+- **Cinematic Typography**: A soul-pairing of *Newsreader* (Editorial Serif) and *Space Grotesk* (Data Mono).
+- **Tactile Materiality**: Extensive use of backdrop blurs, noise textures, and glassmorphism.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🛠️ Technical Stack
+- **Framework**: Next.js 16.2.2 (App Router)
+- **Engine**: OGL (WebGL) 
+- **Styling**: Tailwind CSS 4.0
+- **Logic**: TypeScript
+- **State Management**: Persistent LocalStorage Hooks
+- **Animations**: Framer Motion 12+
+
+## 📦 Getting Started
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/zaid6isthename-bit/vibe.git
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Launch the environment**:
+   ```bash
+   npm run dev
+   ```
+
+---
+
+*Built with ❤️ by Antigravity AI for high-performance cognitive workflows.*
