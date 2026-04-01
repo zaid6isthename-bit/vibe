@@ -23,6 +23,13 @@ export async function POST(req: NextRequest) {
         prompt = `Generate a single micro-challenge for a student who just read: "${payload.content}". Format as JSON: { type: "quiz", question: string, options: string[], correct_answer: string, explanation: string }. Make it feel like a game.`;
         jsonMode = true;
         break;
+
+      case 'GENERATE_RECAP_QUIZ':
+        prompt = `Generate a 3-question recap quiz for the entire topic of "${payload.topic}". 
+        Context Summary: ${payload.sections.map((s: any) => s.title + ': ' + s.bullet).join(' | ')}.
+        Return an array of 3 unique JSON question objects: [{ "question": string, "options": string[], "correct_answer": string, "explanation": string }].`;
+        jsonMode = true;
+        break;
       
       case 'DECISION_DEBATE':
         prompt = `Analyze this decision: "${payload.topic}". 

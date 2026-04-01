@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AttentionGauge } from './AttentionGauge';
 import { useAttention, AttentionState } from '@/hooks/use-attention';
-import { LayoutDashboard, BookOpen, ChevronRight, Zap, Target, BookMarked, HelpCircle, CheckCircle2 } from 'lucide-react';
+import { LayoutDashboard, BookOpen, ChevronRight, Zap, Target, BookMarked, HelpCircle, CheckCircle2, Brain } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -36,6 +36,9 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
   const [contentFlash, setContentFlash] = useState(false);
   const [completedSections, setCompletedSections] = useState<string[]>([]);
   const [stats, setStats] = useState({ correctChallenges: 0, totalChallenges: 0 });
+  const [inRecapMode, setInRecapMode] = useState(false);
+  const [recapQuestions, setRecapQuestions] = useState<any[]>([]);
+  const [recapIdx, setRecapIdx] = useState(0);
 
   const currentSection = sections[currentIdx];
   const attention = useAttention(currentSection?.id);
@@ -115,13 +118,47 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
     }, 1500);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentIdx < sections.length - 1) {
       setCompletedSections(prev => [...prev, currentSection.id]);
       setCurrentIdx(prev => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      onFinish({ sections, attention, stats });
+      // Start Final Recap Quiz
+      setLoading(true);
+      try {
+         const res = await fetch('/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+               action: 'GENERATE_RECAP_QUIZ', 
+               payload: { topic, sections } 
+            }),
+         });
+         const data = await res.json();
+         setRecapQuestions(data);
+         setRecapIdx(0);
+         setInRecapMode(true);
+      } catch (e) {
+         console.error(e);
+         onFinish({ sections, attention, stats });
+      } finally {
+         setLoading(false);
+      }
+    }
+  };
+
+  const handleRecapAnswer = (isCorrect: boolean) => {
+    const nextIdx = recapIdx + 1;
+    setStats(prev => ({ 
+      correctChallenges: prev.correctChallenges + (isCorrect ? 1 : 0),
+      totalChallenges: prev.totalChallenges + 1
+    }));
+    
+    if (nextIdx < recapQuestions.length) {
+       setRecapIdx(nextIdx);
+    } else {
+       onFinish({ sections, attention, stats, recapPassed: true });
     }
   };
 
@@ -173,82 +210,123 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
           animate={{ scale: contentFlash ? 0.99 : 1, opacity: contentFlash ? 0.8 : 1 }}
           className="glass-dark p-10 min-h-[400px] flex flex-col relative overflow-hidden"
         >
-          {/* Adaptation Badge */}
-          <div className="absolute top-0 right-0 p-4">
-             <div className="flex items-center gap-2 bg-white/5 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-                <div className={cn("w-2 h-2 rounded-full", {
-                   "bg-teal": adaptationMode === 'Full',
-                   "bg-purple-400": adaptationMode === 'Bullet',
-                   "bg-amber-400": adaptationMode === 'Story',
-                   "bg-red-400": adaptationMode === 'Challenge',
-                })} />
-                <span className="text-[10px] uppercase tracking-widest font-bold text-white/60">
-                   {adaptationMode} Mode
-                </span>
-             </div>
-          </div>
-
-          <div className="flex-1 space-y-6">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`${currentIdx}-${adaptationMode}`}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className={cn(
-                   "prose prose-invert max-w-none text-lg leading-relaxed text-white/90",
-                   adaptationMode === 'Challenge' && "blur-[4px] pointer-events-none transition-all duration-700"
-                )}
-              >
-                {adaptationMode === 'Full' && (
-                  <p>{currentSection?.full}</p>
-                )}
-                
-                {adaptationMode === 'Bullet' && (
-                  <div className="space-y-4">
-                    {currentSection?.bullet.split('\n').filter(Boolean).map((b, i) => (
-                      <motion.div 
-                        initial={{ x: -10, opacity: 0 }} 
-                        animate={{ x: 0, opacity: 1 }} 
-                        transition={{ delay: i * 0.1 }}
-                        key={i} 
-                        className="flex items-start gap-3 bg-white/5 p-4 rounded-xl border border-white/5 border-l-2 border-l-teal"
-                      >
-                        <CheckCircle2 size={18} className="text-teal mt-1 shrink-0" />
-                        <p>{b.replace(/^[\-\*]\s*/, '')}</p>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-
-                {adaptationMode === 'Story' && (
-                  <div className="bg-amber-500/5 border border-amber-500/20 p-8 rounded-2xl italic text-amber-200/90 relative">
-                    <span className="absolute -top-4 -left-4 text-6xl text-amber-500/10 italic font-serif">"</span>
-                    <p className="relative z-10">{currentSection?.story}</p>
-                   <div className="mt-4 flex items-center gap-2 text-amber-500/70 text-xs font-bold uppercase tracking-widest">
-                      <Zap size={14} /> Memorable Analogy
+          {inRecapMode ? (
+             <div className="flex-1 flex flex-col items-center justify-center space-y-10 py-10 relative">
+                <div className="text-center space-y-4">
+                   <div className="inline-flex items-center gap-2 bg-teal/10 text-teal px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest border border-teal/20">
+                      <Target size={14} /> Final Assessment
                    </div>
-                  </div>
-                )}
+                   <h2 className="text-4xl font-black text-white italic">RECAP <span className="text-teal">SIMULATION</span></h2>
+                   <p className="text-white/40 font-bold uppercase tracking-widest text-[10px]">Question {recapIdx + 1} of {recapQuestions.length}</p>
+                </div>
 
-                {adaptationMode === 'Challenge' && (
-                  <p className="opacity-50">{currentSection?.full.slice(0, 300)}...</p>
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
+                <div className="w-full max-w-2xl space-y-8">
+                   <h3 className="text-2xl font-bold text-center text-white/90 leading-snug">
+                      {recapQuestions[recapIdx]?.question}
+                   </h3>
 
-          <div className="mt-12 flex justify-end">
-            <motion.button
-              whileHover={{ x: 5 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleNext}
-              className="bg-white text-background font-bold px-8 py-4 rounded-xl flex items-center gap-3 transition-all hover:bg-teal hover:text-white"
-            >
-              {currentIdx < sections.length - 1 ? 'Next Section' : 'Finish Session'}
-              <ChevronRight size={20} />
-            </motion.button>
-          </div>
+                   <div className="grid grid-cols-1 gap-4">
+                      {recapQuestions[recapIdx]?.options.map((opt: string, i: number) => (
+                         <button
+                            key={i}
+                            onClick={() => handleRecapAnswer(opt === recapQuestions[recapIdx]?.correct_answer)}
+                            className="w-full p-6 text-left rounded-2xl bg-white/5 border border-white/10 hover:border-teal hover:bg-teal/5 transition-all group relative overflow-hidden"
+                         >
+                            <div className="flex items-center gap-4">
+                               <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center font-black text-xs text-white/40 group-hover:bg-teal group-hover:text-white transition-all">
+                                  {String.fromCharCode(65 + i)}
+                               </div>
+                               <span className="text-lg font-bold text-white/80 group-hover:text-white transition-all">{opt}</span>
+                            </div>
+                         </button>
+                      ))}
+                   </div>
+                </div>
+
+                <div className="absolute -bottom-20 -right-20 opacity-[0.03] rotate-12 pointer-events-none">
+                   <Brain size={280} className="text-teal" />
+                </div>
+             </div>
+          ) : (
+            <>
+              {/* Adaptation Badge */}
+              <div className="absolute top-0 right-0 p-4">
+                 <div className="flex items-center gap-2 bg-white/5 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                    <div className={cn("w-2 h-2 rounded-full", {
+                       "bg-teal": adaptationMode === 'Full',
+                       "bg-purple-400": adaptationMode === 'Bullet',
+                       "bg-amber-400": adaptationMode === 'Story',
+                       "bg-red-400": adaptationMode === 'Challenge',
+                    })} />
+                    <span className="text-[10px] uppercase tracking-widest font-bold text-white/60">
+                       {adaptationMode} Mode
+                    </span>
+                 </div>
+              </div>
+
+              <div className="flex-1 space-y-6">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={`${currentIdx}-${adaptationMode}`}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className={cn(
+                       "prose prose-invert max-w-none text-lg leading-relaxed text-white/90",
+                       adaptationMode === 'Challenge' && "blur-[4px] pointer-events-none transition-all duration-700"
+                    )}
+                  >
+                    {adaptationMode === 'Full' && (
+                      <p>{currentSection?.full}</p>
+                    )}
+                    
+                    {adaptationMode === 'Bullet' && (
+                      <div className="space-y-4">
+                        {currentSection?.bullet.split('\n').filter(Boolean).map((b, i) => (
+                          <motion.div 
+                            initial={{ x: -10, opacity: 0 }} 
+                            animate={{ x: 0, opacity: 1 }} 
+                            transition={{ delay: i * 0.1 }}
+                            key={i} 
+                            className="flex items-start gap-3 bg-white/5 p-4 rounded-xl border border-white/5 border-l-2 border-l-teal"
+                          >
+                            <CheckCircle2 size={18} className="text-teal mt-1 shrink-0" />
+                            <p>{b.replace(/^[\-\*]\s*/, '')}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+
+                    {adaptationMode === 'Story' && (
+                      <div className="bg-amber-500/5 border border-amber-500/20 p-8 rounded-2xl italic text-amber-200/90 relative">
+                        <span className="absolute -top-4 -left-4 text-6xl text-amber-500/10 italic font-serif">"</span>
+                        <p className="relative z-10">{currentSection?.story}</p>
+                       <div className="mt-4 flex items-center gap-2 text-amber-500/70 text-xs font-bold uppercase tracking-widest">
+                          <Zap size={14} /> Memorable Analogy
+                       </div>
+                      </div>
+                    )}
+
+                    {adaptationMode === 'Challenge' && (
+                      <p className="opacity-50">{currentSection?.full.slice(0, 300)}...</p>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              <div className="mt-12 flex justify-end">
+                <motion.button
+                  whileHover={{ x: 5 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleNext}
+                  className="bg-white text-background font-bold px-8 py-4 rounded-xl flex items-center gap-3 transition-all hover:bg-teal hover:text-white"
+                >
+                  {currentIdx < sections.length - 1 ? 'Next Section' : 'Finish Session'}
+                  <ChevronRight size={20} />
+                </motion.button>
+              </div>
+            </>
+          )}
         </motion.div>
 
         {/* Challenge Slide-in Overlay */}
