@@ -1,28 +1,10 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
-import { Renderer, Triangle, Program, Mesh, OGLRenderingContext } from 'ogl';
+import { useEffect, useRef } from 'react';
+import { Renderer, Triangle, Program, Mesh } from 'ogl';
 import './Prism.css';
 
-interface PrismProps {
-  height?: number;
-  baseWidth?: number;
-  animationType?: 'rotate' | 'hover' | '3drotate';
-  glow?: number;
-  offset?: { x: number; y: number };
-  noise?: number;
-  transparent?: boolean;
-  scale?: number;
-  hueShift?: number;
-  colorFrequency?: number;
-  hoverStrength?: number;
-  inertia?: number;
-  bloom?: number;
-  suspendWhenOffscreen?: boolean;
-  timeScale?: number;
-}
-
-const Prism: React.FC<PrismProps> = ({
+const Prism = ({
   height = 3.5,
   baseWidth = 5.5,
   animationType = 'rotate',
@@ -38,7 +20,7 @@ const Prism: React.FC<PrismProps> = ({
   bloom = 1,
   suspendWhenOffscreen = false,
   timeScale = 0.5
-}) => {
+}: any) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,17 +46,16 @@ const Prism: React.FC<PrismProps> = ({
     const HOVSTR = Math.max(0, hoverStrength || 1);
     const INERT = Math.max(0, Math.min(1, inertia || 0.12));
 
-    const dpr = typeof window !== 'undefined' ? Math.min(2, window.devicePixelRatio || 1) : 1;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
     const renderer = new Renderer({
       dpr,
       alpha: transparent,
       antialias: false
     });
     const gl = renderer.gl;
-    gl.disable(gl.DEPTH_TEST);
-    gl.disable(gl.CULL_FACE);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    (gl as any).disable(gl.DEPTH_TEST);
+    (gl as any).disable(gl.CULL_FACE);
+    (gl as any).disable(gl.BLEND);
 
     Object.assign(gl.canvas.style, {
       position: 'absolute',
@@ -191,7 +172,7 @@ const Prism: React.FC<PrismProps> = ({
           o += (sin((p.y + z) * cf + vec4(0.0, 1.0, 2.0, 3.0)) + 1.0) / d;
         }
 
-        o = tanh4(o * o * (uGlow * uBloom) / 5e4);
+        o = tanh4(o * o * (uGlow * uBloom) / 1e5);
 
         vec3 col = o.rgb;
         float n = rand(gl_FragCoord.xy + vec2(iTime));
@@ -205,7 +186,7 @@ const Prism: React.FC<PrismProps> = ({
           col = clamp(hueRotation(uHueShift) * col, 0.0, 1.0);
         }
 
-        gl_FragColor = vec4(col, 1.0);
+        gl_FragColor = vec4(col, o.a);
       }
     `;
 
@@ -318,7 +299,6 @@ const Prism: React.FC<PrismProps> = ({
 
     const pointer = { x: 0, y: 0, inside: true };
     const onMove = (e: PointerEvent) => {
-      if (typeof window === 'undefined') return;
       const ww = Math.max(1, window.innerWidth);
       const wh = Math.max(1, window.innerHeight);
       const cx = ww * 0.5;
@@ -336,9 +316,9 @@ const Prism: React.FC<PrismProps> = ({
       pointer.inside = false;
     };
 
-    let onPointerMove: ((e: PointerEvent) => void) | null = null;
+    let onPointerMove: any = null;
     if (animationType === 'hover') {
-      onPointerMove = e => {
+      onPointerMove = (e: PointerEvent) => {
         onMove(e);
         startRAF();
       };
@@ -405,15 +385,15 @@ const Prism: React.FC<PrismProps> = ({
       }
     };
 
-    const io = new IntersectionObserver(entries => {
-      const vis = entries.some(e => e.isIntersecting);
-      if (vis) startRAF();
-      else stopRAF();
-    });
-
     if (suspendWhenOffscreen) {
+      const io = new IntersectionObserver(entries => {
+        const vis = entries.some(e => e.isIntersecting);
+        if (vis) startRAF();
+        else stopRAF();
+      });
       io.observe(container);
       startRAF();
+      (container as any).__prismIO = io;
     } else {
       startRAF();
     }
@@ -421,11 +401,15 @@ const Prism: React.FC<PrismProps> = ({
     return () => {
       stopRAF();
       ro.disconnect();
-      io.disconnect();
       if (animationType === 'hover') {
         if (onPointerMove) window.removeEventListener('pointermove', onPointerMove);
         window.removeEventListener('mouseleave', onLeave);
         window.removeEventListener('blur', onBlur);
+      }
+      if (suspendWhenOffscreen) {
+        const io = (container as any).__prismIO;
+        if (io) io.disconnect();
+        delete (container as any).__prismIO;
       }
       if (gl.canvas.parentElement === container) container.removeChild(gl.canvas);
     };

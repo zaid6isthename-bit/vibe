@@ -19,14 +19,14 @@ export default function PersistentBackground() {
       <div className="absolute inset-0 opacity-100">
         <Prism
           animationType="rotate"
-          timeScale={0.4}
-          height={4.0}
-          baseWidth={6.0}
-          scale={4.0}
+          timeScale={0.5}
+          height={3.5}
+          baseWidth={5.5}
+          scale={3.6}
           hueShift={0}
-          colorFrequency={1.5}
-          noise={0.1}
-          glow={2.0}
+          colorFrequency={1}
+          noise={0}
+          glow={1}
         />
       </div>
       
