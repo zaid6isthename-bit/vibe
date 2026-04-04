@@ -43,29 +43,29 @@ function extractJsonCandidate(content: string): string {
 }
 
 export async function askClaude(prompt: string, jsonMode = false) {
-  const anthropic = getClient();
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 6400,
-    system: FLOW_IQ_SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: prompt }],
-  });
-
-  const content = response.content
-    .filter((item) => item.type === 'text')
-    .map((item) => item.text)
-    .join('\n')
-    .trim();
-
-  if (!jsonMode) {
-    return content;
-  }
-
   try {
+    const anthropic = getClient();
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 6400,
+      system: FLOW_IQ_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const content = response.content
+      .filter((item) => item.type === 'text')
+      .map((item) => item.text)
+      .join('\n')
+      .trim();
+
+    if (!jsonMode) {
+      return content;
+    }
+
     return JSON.parse(extractJsonCandidate(content));
   } catch (error) {
-    console.error('Claude JSON parsing error:', error);
-    return content;
+    console.error('Claude request error:', error);
+    return null;
   }
 }
 
