@@ -199,7 +199,7 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = ({ activePomoBg, acti
       </motion.div>
 
       {/* Main Timer Display */}
-      <div className={cn("flex-1 glass-dark p-12 relative overflow-hidden flex flex-col items-center min-h-[700px] border-white/10", getBgStyle())}>
+      <div className={cn("flowiq-pomodoro-scene flex-1 glass-dark p-12 relative overflow-hidden flex flex-col items-center min-h-[700px] border-white/10", getBgStyle())}>
         {/* Settings Panel */}
         <AnimatePresence>
           {showSettings && (
@@ -367,14 +367,14 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = ({ activePomoBg, acti
            <div className="flex items-center gap-6">
               <button 
                  onClick={toggleTimer} 
-                 className={getBtnStyle('PRIMARY')}
+                 className={cn(getBtnStyle('PRIMARY'), "flowiq-pomodoro-btn")}
               >
                  {isActive ? <Pause size={20} className="fill-current" /> : <Play size={20} className="fill-current" />}
                  {isActive ? 'HALT INTERFACE' : 'INITIATE FOCUS'}
               </button>
               <button 
                  onClick={resetTimer} 
-                 className={getBtnStyle('SECONDARY')}
+                 className={cn(getBtnStyle('SECONDARY'), "flowiq-pomodoro-btn")}
               >
                  <RotateCcw size={20} />
               </button>

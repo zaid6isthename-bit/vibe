@@ -9,6 +9,7 @@ import { DecisionsPanel } from '@/components/DecisionsPanel';
 import { ExecutionEngine } from '@/components/ExecutionEngine';
 import { Marketplace } from '@/components/Marketplace';
 import { StudentAuthGate } from '@/components/StudentAuthGate';
+import { useNeuralMarket } from '@/context/NeuralMarketContext';
 import { useNeuroWallet } from '@/hooks/use-neuro-wallet';
 import { useStudentProfile } from '@/hooks/use-student-profile';
 import { PomodoroTimer } from '@/components/PomodoroTimer';
@@ -34,6 +35,7 @@ export default function NeuroOS() {
     activeTheme, activeFont, activeBackdrop, activePomoBg, activePomoBtn,
     addCoins, spendCoins, updateStreak, setEquipped 
   } = useNeuroWallet();
+  const { flowCoins, addFlowCoins } = useNeuralMarket();
   const { profile, ready, saveProfile, clearProfile, defaultDraft } = useStudentProfile();
 
   // Fix Hydration Mismatch
@@ -54,7 +56,11 @@ export default function NeuroOS() {
   const handleStudyFinish = (stats: any) => {
     const earned = Math.round((stats.attention?.score || 0) * 0.5 + (stats.stats?.correctChallenges || 0) * 10);
     addCoins(Math.max(10, earned)); // Minimum 10 nC per session
+    addFlowCoins(Math.max(25, Math.round(earned * 0.6)));
     updateStreak(streak + 1);
+    if ((streak + 1) % 7 === 0) {
+      addFlowCoins(50);
+    }
     handleTabChange('DASHBOARD');
   };
 
@@ -175,7 +181,10 @@ export default function NeuroOS() {
                               <PomodoroTimer 
                                 activePomoBg={activePomoBg}
                                 activePomoBtn={activePomoBtn}
-                                onSessionComplete={() => addCoins(100)} 
+                                onSessionComplete={() => {
+                                  addCoins(100);
+                                  addFlowCoins(25);
+                                }} 
                               />
                            </div>
                         )}
@@ -230,6 +239,9 @@ export default function NeuroOS() {
                      </div>
                      <div className="flex items-center gap-3 text-sm font-black text-white/60 pr-2">
                         <Zap size={14} className="text-amber-500 fill-amber-500" /> {coins} <span className="text-amber-500/50">nC</span>
+                     </div>
+                     <div className="flex items-center gap-3 text-sm font-black text-white/60 pr-2">
+                        <Zap size={14} className="text-blue fill-blue" /> {flowCoins} <span className="text-blue/60">FC</span>
                      </div>
                   </div>
                </div>
