@@ -393,7 +393,13 @@ export async function generateAI(
       console.warn(`Ignoring malformed Puter response for ${action}`, puterResult);
     }
   } catch (error) {
-    console.error('Puter client generation failed:', error);
+    const details =
+      error instanceof Error
+        ? error.message
+        : typeof error === 'string'
+          ? error
+          : 'Unknown Puter response issue';
+    console.warn(`Puter generation fallback triggered for ${action}: ${details}`);
   }
 
   const res = await fetch('/api/generate', {

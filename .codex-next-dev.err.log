@@ -135,3 +135,398 @@ Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_reques
   title: [32m'Definition, Origin, and Why Green Chemistry Matters'[39m
 } 
     at LearningArea.useEffect.fetchSections (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2179:37) (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2179:37)
+[browser] Puter client generation failed: {
+  error: {
+    [32m'$'[39m: [32m'heyputer:api/APIError'[39m,
+    code: [32m'insufficient_funds'[39m,
+    delegate: [32m'usage-limited-chat'[39m,
+    message: [32m'Available funding is insufficient for this request.'[39m,
+    status: [33m402[39m
+  },
+  success: [33mfalse[39m
+} 
+    at generateAI (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2097:17)
+    at async LearningArea.useEffect.fetchSections (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2197:38) (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2097:17)
+[browser] Puter client generation failed: {
+  error: {
+    [32m'$'[39m: [32m'heyputer:api/APIError'[39m,
+    code: [32m'insufficient_funds'[39m,
+    delegate: [32m'usage-limited-chat'[39m,
+    message: [32m'Available funding is insufficient for this request.'[39m,
+    status: [33m402[39m
+  },
+  success: [33mfalse[39m
+} 
+    at generateAI (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2097:17)
+    at async LearningArea.useEffect.fetchSections (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2197:38) (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2097:17)
+Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CZjPeEmXon4wtHnGaw9Uc"}
+    at async askClaude (src\lib\claude.ts:48:22)
+    at async POST (src\app\api\generate\route.ts:503:24)
+  46 |   try {
+  47 |     const anthropic = getClient();
+> 48 |     const response = await anthropic.messages.create({
+     |                      ^
+  49 |       model: 'claude-sonnet-4-20250514',
+  50 |       max_tokens: 6400,
+  51 |       system: FLOW_IQ_SYSTEM_PROMPT, {
+  status: 400,
+  headers: Headers {
+    date: 'Sat, 04 Apr 2026 20:50:32 GMT',
+    'content-type': 'application/json',
+    'transfer-encoding': 'chunked',
+    connection: 'keep-alive',
+    'x-should-retry': 'false',
+    'request-id': 'req_011CZjPeEmXon4wtHnGaw9Uc',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'anthropic-organization-id': 'f062a860-e2f6-4365-9592-2486220df78d',
+    server: 'cloudflare',
+    'x-envoy-upstream-service-time': '13',
+    'content-encoding': 'gzip',
+    vary: 'Accept-Encoding',
+    'server-timing': 'x-originResponse;dur=14',
+    'set-cookie': '_cfuvid=d7O5HVEafTuO4Pvvr3NhLaRpPQHrHrAoM._22lmA5bw-1775335831.920371-1.0.1.1-KZGivnb40Jtl3j1isLFD9Hwd6krdYSt7EgG66e_cmn4; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.anthropic.com',
+    'x-robots-tag': 'none',
+    'cf-cache-status': 'DYNAMIC',
+    'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
+    'cf-ray': '9e732f957c3f4719-BOM'
+  },
+  requestID: 'req_011CZjPeEmXon4wtHnGaw9Uc',
+  error: {
+    type: 'error',
+    error: {
+      type: 'invalid_request_error',
+      message: 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'
+    },
+    request_id: 'req_011CZjPeEmXon4wtHnGaw9Uc'
+  },
+  type: 'invalid_request_error'
+}
+Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CZjPemC7rWdRSLXXehhnF"}
+    at async askClaude (src\lib\claude.ts:48:22)
+    at async POST (src\app\api\generate\route.ts:503:24)
+  46 |   try {
+  47 |     const anthropic = getClient();
+> 48 |     const response = await anthropic.messages.create({
+     |                      ^
+  49 |       model: 'claude-sonnet-4-20250514',
+  50 |       max_tokens: 6400,
+  51 |       system: FLOW_IQ_SYSTEM_PROMPT, {
+  status: 400,
+  headers: Headers {
+    date: 'Sat, 04 Apr 2026 20:50:39 GMT',
+    'content-type': 'application/json',
+    'transfer-encoding': 'chunked',
+    connection: 'keep-alive',
+    'x-should-retry': 'false',
+    'request-id': 'req_011CZjPemC7rWdRSLXXehhnF',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'anthropic-organization-id': 'f062a860-e2f6-4365-9592-2486220df78d',
+    server: 'cloudflare',
+    'x-envoy-upstream-service-time': '12',
+    'content-encoding': 'gzip',
+    vary: 'Accept-Encoding',
+    'server-timing': 'x-originResponse;dur=13',
+    'set-cookie': '_cfuvid=u6J2ULnbJCtC3Q55_7OaqREMYmpxPrHQL5nDfd4PmY0-1775335839.0407214-1.0.1.1-D6ecBqfFfjwRE7cHVmZEQQSgdwYCIZ5fo.PGbJ8ajP8; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.anthropic.com',
+    'x-robots-tag': 'none',
+    'cf-cache-status': 'DYNAMIC',
+    'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
+    'cf-ray': '9e732fc1fb6747ec-BOM'
+  },
+  requestID: 'req_011CZjPemC7rWdRSLXXehhnF',
+  error: {
+    type: 'error',
+    error: {
+      type: 'invalid_request_error',
+      message: 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'
+    },
+    request_id: 'req_011CZjPemC7rWdRSLXXehhnF'
+  },
+  type: 'invalid_request_error'
+}
+[browser] Puter client generation failed: {
+  error: {
+    [32m'$'[39m: [32m'heyputer:api/APIError'[39m,
+    code: [32m'insufficient_funds'[39m,
+    delegate: [32m'usage-limited-chat'[39m,
+    message: [32m'Available funding is insufficient for this request.'[39m,
+    status: [33m402[39m
+  },
+  success: [33mfalse[39m
+} 
+    at generateAI (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2097:17)
+    at async handleNext (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2295:34) (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2097:17)
+Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CZjPfrepHzsNbSrAQYzCA"}
+    at async askClaude (src\lib\claude.ts:48:22)
+    at async POST (src\app\api\generate\route.ts:503:24)
+  46 |   try {
+  47 |     const anthropic = getClient();
+> 48 |     const response = await anthropic.messages.create({
+     |                      ^
+  49 |       model: 'claude-sonnet-4-20250514',
+  50 |       max_tokens: 6400,
+  51 |       system: FLOW_IQ_SYSTEM_PROMPT, {
+  status: 400,
+  headers: Headers {
+    date: 'Sat, 04 Apr 2026 20:50:54 GMT',
+    'content-type': 'application/json',
+    'transfer-encoding': 'chunked',
+    connection: 'keep-alive',
+    'x-should-retry': 'false',
+    'request-id': 'req_011CZjPfrepHzsNbSrAQYzCA',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'anthropic-organization-id': 'f062a860-e2f6-4365-9592-2486220df78d',
+    server: 'cloudflare',
+    'x-envoy-upstream-service-time': '17',
+    'content-encoding': 'gzip',
+    vary: 'Accept-Encoding',
+    'server-timing': 'x-originResponse;dur=19',
+    'set-cookie': '_cfuvid=gHwpIYWQyA_gVglYI2Iur4V5yr9UDHpPSwVSNIjcppg-1775335853.8837893-1.0.1.1-Utf8sBvVoJBTRUjErFVAtacvU40y2hZrRst.dA9zcUo; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.anthropic.com',
+    'x-robots-tag': 'none',
+    'cf-cache-status': 'DYNAMIC',
+    'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
+    'cf-ray': '9e73301ece4d3c6a-BOM'
+  },
+  requestID: 'req_011CZjPfrepHzsNbSrAQYzCA',
+  error: {
+    type: 'error',
+    error: {
+      type: 'invalid_request_error',
+      message: 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'
+    },
+    request_id: 'req_011CZjPfrepHzsNbSrAQYzCA'
+  },
+  type: 'invalid_request_error'
+}
+[browser] Puter client generation failed: {
+  error: {
+    [32m'$'[39m: [32m'heyputer:api/APIError'[39m,
+    code: [32m'insufficient_funds'[39m,
+    delegate: [32m'usage-limited-chat'[39m,
+    message: [32m'Available funding is insufficient for this request.'[39m,
+    status: [33m402[39m
+  },
+  success: [33mfalse[39m
+} 
+    at generateAI (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2097:17)
+    at async handleNext (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2310:30) (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2097:17)
+Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CZjPg9TMeeW58aHpUrdEu"}
+    at async askClaude (src\lib\claude.ts:48:22)
+    at async POST (src\app\api\generate\route.ts:503:24)
+  46 |   try {
+  47 |     const anthropic = getClient();
+> 48 |     const response = await anthropic.messages.create({
+     |                      ^
+  49 |       model: 'claude-sonnet-4-20250514',
+  50 |       max_tokens: 6400,
+  51 |       system: FLOW_IQ_SYSTEM_PROMPT, {
+  status: 400,
+  headers: Headers {
+    date: 'Sat, 04 Apr 2026 20:50:58 GMT',
+    'content-type': 'application/json',
+    'transfer-encoding': 'chunked',
+    connection: 'keep-alive',
+    'x-should-retry': 'false',
+    'request-id': 'req_011CZjPg9TMeeW58aHpUrdEu',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'anthropic-organization-id': 'f062a860-e2f6-4365-9592-2486220df78d',
+    server: 'cloudflare',
+    'x-envoy-upstream-service-time': '124',
+    'content-encoding': 'gzip',
+    vary: 'Accept-Encoding',
+    'server-timing': 'x-originResponse;dur=126',
+    'set-cookie': '_cfuvid=tu2c4.hSFwZ37dNW3mAy28M1M7rLEsnEwJTfQv7V9LQ-1775335857.8149502-1.0.1.1-qEghS3VtYZHhLLApuYJuYubfwtJ7YnarXJUXEpiSEkI; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.anthropic.com',
+    'x-robots-tag': 'none',
+    'cf-cache-status': 'DYNAMIC',
+    'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
+    'cf-ray': '9e7330375aab3c6a-BOM'
+  },
+  requestID: 'req_011CZjPg9TMeeW58aHpUrdEu',
+  error: {
+    type: 'error',
+    error: {
+      type: 'invalid_request_error',
+      message: 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'
+    },
+    request_id: 'req_011CZjPg9TMeeW58aHpUrdEu'
+  },
+  type: 'invalid_request_error'
+}
+[browser] Puter client generation failed: {
+  error: {
+    [32m'$'[39m: [32m'heyputer:api/APIError'[39m,
+    code: [32m'insufficient_funds'[39m,
+    delegate: [32m'usage-limited-chat'[39m,
+    message: [32m'Available funding is insufficient for this request.'[39m,
+    status: [33m402[39m
+  },
+  success: [33mfalse[39m
+} 
+    at generateAI (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2097:17)
+    at async handleNext (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2329:34) (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2097:17)
+Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CZjPgzRQy2QQvMgcBn9d9"}
+    at async askClaude (src\lib\claude.ts:48:22)
+    at async POST (src\app\api\generate\route.ts:503:24)
+  46 |   try {
+  47 |     const anthropic = getClient();
+> 48 |     const response = await anthropic.messages.create({
+     |                      ^
+  49 |       model: 'claude-sonnet-4-20250514',
+  50 |       max_tokens: 6400,
+  51 |       system: FLOW_IQ_SYSTEM_PROMPT, {
+  status: 400,
+  headers: Headers {
+    date: 'Sat, 04 Apr 2026 20:51:09 GMT',
+    'content-type': 'application/json',
+    'transfer-encoding': 'chunked',
+    connection: 'keep-alive',
+    'x-should-retry': 'false',
+    'request-id': 'req_011CZjPgzRQy2QQvMgcBn9d9',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'anthropic-organization-id': 'f062a860-e2f6-4365-9592-2486220df78d',
+    server: 'cloudflare',
+    'x-envoy-upstream-service-time': '24',
+    'content-encoding': 'gzip',
+    vary: 'Accept-Encoding',
+    'server-timing': 'x-originResponse;dur=25',
+    'set-cookie': '_cfuvid=F3LyHihOofwNgeof3FG8orD5wtXcGVjHlyCehzuisl4-1775335869.2681305-1.0.1.1-p8I9svQBDpC7FPEgNK.2Hngx8xenfuI3yqNlnjm_Cbk; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.anthropic.com',
+    'x-robots-tag': 'none',
+    'cf-cache-status': 'DYNAMIC',
+    'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
+    'cf-ray': '9e73307eebac3b8b-BOM'
+  },
+  requestID: 'req_011CZjPgzRQy2QQvMgcBn9d9',
+  error: {
+    type: 'error',
+    error: {
+      type: 'invalid_request_error',
+      message: 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'
+    },
+    request_id: 'req_011CZjPgzRQy2QQvMgcBn9d9'
+  },
+  type: 'invalid_request_error'
+}
+[browser] Puter generation fallback triggered for GENERATE_SECTIONS: Unknown Puter response issue (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2431:13)
+[browser] Puter generation fallback triggered for GENERATE_SECTIONS: Unknown Puter response issue (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2431:13)
+Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CZjPxbirhENWn16Msu35N"}
+    at async askClaude (src\lib\claude.ts:48:22)
+    at async POST (src\app\api\generate\route.ts:503:24)
+  46 |   try {
+  47 |     const anthropic = getClient();
+> 48 |     const response = await anthropic.messages.create({
+     |                      ^
+  49 |       model: 'claude-sonnet-4-20250514',
+  50 |       max_tokens: 6400,
+  51 |       system: FLOW_IQ_SYSTEM_PROMPT, {
+  status: 400,
+  headers: Headers {
+    date: 'Sat, 04 Apr 2026 20:54:41 GMT',
+    'content-type': 'application/json',
+    'transfer-encoding': 'chunked',
+    connection: 'keep-alive',
+    'x-should-retry': 'false',
+    'request-id': 'req_011CZjPxbirhENWn16Msu35N',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'anthropic-organization-id': 'f062a860-e2f6-4365-9592-2486220df78d',
+    server: 'cloudflare',
+    'x-envoy-upstream-service-time': '15',
+    'content-encoding': 'gzip',
+    vary: 'Accept-Encoding',
+    'server-timing': 'x-originResponse;dur=17',
+    'set-cookie': '_cfuvid=9rAo9mPnBb5JKnJsOgiUNARkPHmduMMpnqqLf0qIu4Q-1775336081.011697-1.0.1.1-axyg07eZFtABFnfDJtAgruH8h.RxgCGwFmbnHX4vapY; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.anthropic.com',
+    'x-robots-tag': 'none',
+    'cf-cache-status': 'DYNAMIC',
+    'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
+    'cf-ray': '9e7335aa5e460522-BOM'
+  },
+  requestID: 'req_011CZjPxbirhENWn16Msu35N',
+  error: {
+    type: 'error',
+    error: {
+      type: 'invalid_request_error',
+      message: 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'
+    },
+    request_id: 'req_011CZjPxbirhENWn16Msu35N'
+  },
+  type: 'invalid_request_error'
+}
+Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CZjPxcGMXiqnALmFWRP1f"}
+    at async askClaude (src\lib\claude.ts:48:22)
+    at async POST (src\app\api\generate\route.ts:503:24)
+  46 |   try {
+  47 |     const anthropic = getClient();
+> 48 |     const response = await anthropic.messages.create({
+     |                      ^
+  49 |       model: 'claude-sonnet-4-20250514',
+  50 |       max_tokens: 6400,
+  51 |       system: FLOW_IQ_SYSTEM_PROMPT, {
+  status: 400,
+  headers: Headers {
+    date: 'Sat, 04 Apr 2026 20:54:41 GMT',
+    'content-type': 'application/json',
+    'content-length': '234',
+    connection: 'keep-alive',
+    'x-should-retry': 'false',
+    'request-id': 'req_011CZjPxcGMXiqnALmFWRP1f',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'anthropic-organization-id': 'f062a860-e2f6-4365-9592-2486220df78d',
+    server: 'cloudflare',
+    'x-envoy-upstream-service-time': '48',
+    'server-timing': 'x-originResponse;dur=50',
+    'set-cookie': '_cfuvid=G34rICTl0Tz9PdTFmk7V7FtiKK.jdzCsC8m6Y_uX1fU-1775336081.1273818-1.0.1.1-dXPBRiD5ZocMGUaM32LssKEBrRa1PHX1MIK2QvweNyA; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.anthropic.com',
+    'x-robots-tag': 'none',
+    'cf-cache-status': 'DYNAMIC',
+    'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
+    'cf-ray': '9e7335ab0eb92963-BOM'
+  },
+  requestID: 'req_011CZjPxcGMXiqnALmFWRP1f',
+  error: {
+    type: 'error',
+    error: {
+      type: 'invalid_request_error',
+      message: 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'
+    },
+    request_id: 'req_011CZjPxcGMXiqnALmFWRP1f'
+  },
+  type: 'invalid_request_error'
+}
+Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CZjPzay21QuGpxaeJDbmW"}
+    at async askClaude (src\lib\claude.ts:48:22)
+    at async POST (src\app\api\generate\route.ts:503:24)
+  46 |   try {
+  47 |     const anthropic = getClient();
+> 48 |     const response = await anthropic.messages.create({
+     |                      ^
+  49 |       model: 'claude-sonnet-4-20250514',
+  50 |       max_tokens: 6400,
+  51 |       system: FLOW_IQ_SYSTEM_PROMPT, {
+  status: 400,
+  headers: Headers {
+    date: 'Sat, 04 Apr 2026 20:55:08 GMT',
+    'content-type': 'application/json',
+    'content-length': '234',
+    connection: 'keep-alive',
+    'x-should-retry': 'false',
+    'request-id': 'req_011CZjPzay21QuGpxaeJDbmW',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'anthropic-organization-id': 'f062a860-e2f6-4365-9592-2486220df78d',
+    server: 'cloudflare',
+    'x-envoy-upstream-service-time': '47',
+    'server-timing': 'x-originResponse;dur=49',
+    'set-cookie': '_cfuvid=Qgck2T7MXmjUP6kis22gF31kdV_i7SBGrzr2DJC3EWY-1775336107.9584556-1.0.1.1-MXESp1LgG3IRUuQah5zOfB6GXRiy5MWVPmpFvo47x0A; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.anthropic.com',
+    'x-robots-tag': 'none',
+    'cf-cache-status': 'DYNAMIC',
+    'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
+    'cf-ray': '9e733652bddc9be3-BOM'
+  },
+  requestID: 'req_011CZjPzay21QuGpxaeJDbmW',
+  error: {
+    type: 'error',
+    error: {
+      type: 'invalid_request_error',
+      message: 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'
+    },
+    request_id: 'req_011CZjPzay21QuGpxaeJDbmW'
+  },
+  type: 'invalid_request_error'
+}
+[browser] Puter generation fallback triggered for GENERATE_CHALLENGE: Unknown Puter response issue (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2431:13)

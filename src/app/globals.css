@@ -50,9 +50,17 @@ body {
 }
 
 /* ─── Font Activation (applied via ThemeEngine classes on body) ─── */
-body.font-newsreader     { font-family: var(--font-newsreader), Georgia, serif; }
-body.font-space-grotesk  { font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif; }
-body.font-jetbrains-mono { font-family: var(--font-jetbrains-mono), Menlo, monospace; }
+body.font-newsreader {
+  font-family: var(--font-newsreader), Georgia, serif;
+}
+
+body.font-space-grotesk {
+  font-family: var(--font-space-grotesk), ui-sans-serif, sans-serif;
+}
+
+body.font-jetbrains-mono {
+  font-family: var(--font-jetbrains-mono), Menlo, monospace;
+}
 
 /* ─── Theme Accent Overrides via data-theme attribute ───────────── */
 /* Zen Sanctuary — nature greens */
@@ -133,7 +141,7 @@ body.font-jetbrains-mono { font-family: var(--font-jetbrains-mono), Menlo, monos
 }
 
 .glass-card {
-  background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
   backdrop-filter: blur(20px);
   border: 1px solid var(--card-border);
   transition: border-color 0.6s ease;
@@ -148,41 +156,98 @@ body.font-jetbrains-mono { font-family: var(--font-jetbrains-mono), Menlo, monos
 }
 
 /* ─── Shadow Utilities ───────────────────────────────────────────── */
-.shadow-blue      { box-shadow: 0 0 15px color-mix(in srgb, var(--accent-blue) 40%, transparent); }
-.shadow-glow-blue { box-shadow: 0 0 25px color-mix(in srgb, var(--accent-blue) 30%, transparent); }
-.shadow-glow-purple { box-shadow: 0 0 25px rgba(157, 80, 255, 0.3); }
-.workspace-shadow   { box-shadow: 0 0 100px -20px color-mix(in srgb, var(--accent-blue) 10%, transparent); }
+.shadow-blue {
+  box-shadow: 0 0 15px color-mix(in srgb, var(--accent-blue) 40%, transparent);
+}
+
+.shadow-glow-blue {
+  box-shadow: 0 0 25px color-mix(in srgb, var(--accent-blue) 30%, transparent);
+}
+
+.shadow-glow-purple {
+  box-shadow: 0 0 25px rgba(157, 80, 255, 0.3);
+}
+
+.workspace-shadow {
+  box-shadow: 0 0 100px -20px color-mix(in srgb, var(--accent-blue) 10%, transparent);
+}
 
 /* ─── Custom Scrollbar ──────────────────────────────────────────── */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 ::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
 }
-::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
 
-.custom-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
-.custom-scrollbar::-webkit-scrollbar { display: none; }
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-blue);
+}
+
+.custom-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 
 /* ─── Animations ─────────────────────────────────────────────────── */
 @keyframes glow-pulse {
-  0%, 100% { opacity: 0.3; filter: blur(40px); }
-  50%       { opacity: 0.6; filter: blur(60px); }
+
+  0%,
+  100% {
+    opacity: 0.3;
+    filter: blur(40px);
+  }
+
+  50% {
+    opacity: 0.6;
+    filter: blur(60px);
+  }
 }
-.neon-glow { animation: glow-pulse 6s infinite ease-in-out; }
+
+.neon-glow {
+  animation: glow-pulse 6s infinite ease-in-out;
+}
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-10px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
-.animate-float { animation: float 4s infinite ease-in-out; }
+
+.animate-float {
+  animation: float 4s infinite ease-in-out;
+}
 
 @keyframes flow-gradient {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
+
 .animate-flow {
   background-size: 200% 200%;
   animation: flow-gradient 10s ease infinite;
@@ -193,16 +258,379 @@ body.font-jetbrains-mono { font-family: var(--font-jetbrains-mono), Menlo, monos
   content: '|';
   animation: blink 1s infinite;
 }
+
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
 }
 
 /* ─── Flashcard 3D ───────────────────────────────────────────────── */
-.perspective-1000  { perspective: 1000px; }
-.preserve-3d       { transform-style: preserve-3d; }
-.backface-hidden   { backface-visibility: hidden; }
-.rotate-y-180      { transform: rotateY(180deg); }
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
 
 /* ─── Prevent iOS overscroll bounce ─────────────────────────────── */
-html, body { overscroll-behavior: none; }
+html,
+body {
+  overscroll-behavior: none;
+}
+
+/* ============================================================
+   FLOWIQ — NEURAL MARKET ASSET STYLES
+   neuralMarketAssets.css
+   ============================================================
+   Import this once in your _app.tsx or layout.tsx:
+   import '@/styles/neuralMarketAssets.css';
+   ============================================================ */
+
+/* ── CSS Variable Defaults (before any asset is equipped) ── */
+:root {
+  --color-bg-primary: #0f1117;
+  --color-bg-secondary: #161b22;
+  --color-bg-card: #1c2333;
+  --color-accent: #58a6ff;
+  --color-accent-hover: #388bfd;
+  --color-accent-soft: rgba(88, 166, 255, 0.1);
+  --color-text-primary: #e6edf3;
+  --color-text-secondary: #8b949e;
+  --color-border: rgba(88, 166, 255, 0.15);
+  --color-shadow: 0 4px 32px rgba(0, 0, 0, 0.3);
+  --color-sidebar: #0d1117;
+
+  --font-primary: system-ui, sans-serif;
+  --font-display: system-ui, sans-serif;
+
+  --pom-bg: radial-gradient(ellipse at center, #1a1a2e, #0d0d0d);
+  --pom-glow: rgba(88, 166, 255, 0.25);
+  --pom-text: #e6edf3;
+  --pom-accent: #58a6ff;
+
+  --pom-btn-bg: #58a6ff;
+  --pom-btn-border: none;
+  --pom-btn-radius: 50%;
+  --pom-btn-shadow: 0 4px 24px rgba(88, 166, 255, 0.4);
+  --pom-btn-hover-shadow: 0 8px 40px rgba(88, 166, 255, 0.7);
+  --pom-btn-text: #ffffff;
+  --pom-btn-width: 140px;
+  --pom-btn-height: 140px;
+}
+
+/* ── Global font application ─────────────────────────────── */
+body {
+  font-family: var(--font-primary);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  transition: background-color 0.4s ease, color 0.3s ease;
+}
+
+/* ── Pomodoro container uses --pom-* vars ─────────────────── */
+.flowiq-pomodoro-scene {
+  background: var(--pom-bg);
+  color: var(--pom-text);
+  box-shadow: 0 0 80px var(--pom-glow);
+  transition: background 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* ── Pomodoro button uses --pom-btn-* vars ───────────────── */
+.flowiq-pomodoro-btn {
+  background: var(--pom-btn-bg);
+  border: var(--pom-btn-border);
+  border-radius: var(--pom-btn-radius);
+  box-shadow: var(--pom-btn-shadow);
+  color: var(--pom-btn-text);
+  width: var(--pom-btn-width);
+  height: var(--pom-btn-height);
+  cursor: pointer;
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.15s ease,
+    border-radius 0.6s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  position: relative;
+  overflow: hidden;
+}
+
+.flowiq-pomodoro-btn:hover {
+  box-shadow: var(--pom-btn-hover-shadow);
+  transform: scale(1.04);
+}
+
+.flowiq-pomodoro-btn:active {
+  transform: scale(0.97);
+}
+
+/* ════════════════════════════════════════════════════════════
+   BACKGROUND ANIMATIONS
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Neural Grid ─────────────────────────────────────────── */
+.bg-neural-grid::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0, 170, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 170, 255, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: neuralGridPulse 4s ease-in-out infinite;
+}
+
+@keyframes neuralGridPulse {
+
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1.0;
+  }
+}
+
+/* ── Matrix Rain ─────────────────────────────────────────── */
+.bg-matrix-rain::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(180deg,
+      transparent 0px,
+      transparent 20px,
+      rgba(0, 255, 65, 0.03) 20px,
+      rgba(0, 255, 65, 0.03) 21px);
+  animation: matrixScroll 8s linear infinite;
+}
+
+@keyframes matrixScroll {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 0 100vh;
+  }
+}
+
+/* ── Deep Cosmos ─────────────────────────────────────────── */
+.bg-cosmos::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, white 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 70%, rgba(255, 255, 255, 0.8) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 60% 20%, white 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 80%, rgba(255, 255, 255, 0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 60%, rgba(255, 255, 255, 0.9) 0%, transparent 100%),
+    radial-gradient(2px 2px at 70% 50%, rgba(200, 200, 255, 0.8) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 10%, white 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 90%, rgba(255, 255, 255, 0.7) 0%, transparent 100%);
+  animation: cosmosDrift 60s linear infinite;
+}
+
+@keyframes cosmosDrift {
+  from {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  to {
+    transform: translateY(-20px) rotate(1deg);
+  }
+}
+
+/* ── Aurora Borealis ─────────────────────────────────────── */
+.bg-aurora-borealis::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 40% at 20% 60%, rgba(0, 255, 170, 0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 30% at 80% 40%, rgba(0, 150, 255, 0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 70% 35% at 50% 70%, rgba(100, 0, 255, 0.08) 0%, transparent 70%);
+  animation: auroraPulse 8s ease-in-out infinite alternate;
+}
+
+@keyframes auroraPulse {
+  0% {
+    opacity: 0.6;
+    transform: scaleX(1) scaleY(1);
+  }
+
+  33% {
+    opacity: 1.0;
+    transform: scaleX(1.05) scaleY(0.95);
+  }
+
+  66% {
+    opacity: 0.7;
+    transform: scaleX(0.95) scaleY(1.05);
+  }
+
+  100% {
+    opacity: 1.0;
+    transform: scaleX(1) scaleY(1);
+  }
+}
+
+/* ── Geometric Dark ──────────────────────────────────────── */
+.bg-geometric-dark::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(60deg, rgba(233, 69, 96, 0.04) 25%, transparent 25%),
+    linear-gradient(-60deg, rgba(233, 69, 96, 0.04) 25%, transparent 25%),
+    linear-gradient(60deg, transparent 75%, rgba(22, 33, 62, 0.5) 75%),
+    linear-gradient(-60deg, transparent 75%, rgba(15, 52, 96, 0.3) 75%);
+  background-size: 80px 80px;
+  animation: geoShift 20s linear infinite;
+}
+
+@keyframes geoShift {
+  from {
+    background-position: 0 0, 0 0, 0 0, 0 0;
+  }
+
+  to {
+    background-position: 80px 0, -80px 0, 80px 0, -80px 0;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   POMODORO BUTTON ANIMATIONS
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Neon Ring ───────────────────────────────────────────── */
+.pom-btn-neon-ring .flowiq-pomodoro-btn::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--pom-btn-text);
+  opacity: 0;
+  animation: neonRingPulse 2s ease-out infinite;
+}
+
+@keyframes neonRingPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* ── Liquid Fire ─────────────────────────────────────────── */
+.pom-btn-liquid-fire .flowiq-pomodoro-btn {
+  animation: blobMorph 6s ease-in-out infinite;
+}
+
+@keyframes blobMorph {
+  0% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+
+  25% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+
+  50% {
+    border-radius: 50% 60% 30% 60% / 40% 30% 60% 50%;
+  }
+
+  75% {
+    border-radius: 60% 40% 60% 30% / 60% 40% 30% 60%;
+  }
+
+  100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+}
+
+/* ── Aurora Pulse ────────────────────────────────────────── */
+.pom-btn-aurora-pulse .flowiq-pomodoro-btn {
+  animation: auroraShimmer 3s linear infinite;
+  background-size: 200% 200%;
+}
+
+@keyframes auroraShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ── Pixel Press ─────────────────────────────────────────── */
+.pom-btn-pixel .flowiq-pomodoro-btn:active {
+  transform: translate(4px, 4px);
+  box-shadow: none !important;
+}
+
+/* ── Neural Pulse Pomodoro Background ───────────────────── */
+.pom-bg-neural-pulse .flowiq-pomodoro-scene::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0, 245, 196, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 245, 196, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+  animation: pomNeuralPulse 3s ease-in-out infinite;
+}
+
+@keyframes pomNeuralPulse {
+
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 1.0;
+  }
+}
