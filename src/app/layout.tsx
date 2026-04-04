@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { DM_Sans, Newsreader, Space_Grotesk, JetBrains_Mono } from "next/font/google";
-import Script from "next/script";
 import '@/styles/neuralMarketAssets.css';
 import "./globals.css";
 import { NeuralMarketProvider } from '@/context/NeuralMarketContext';
@@ -61,12 +60,11 @@ export default function RootLayout({
         <NeuralMarketProvider>
           {/* Global theme engine: applies CSS vars from wallet state to :root */}
           <ThemeEngine />
-          {/* Persistent 3D Prism background across all navigation */}
+          {/* Persistent LightRays background across all navigation */}
           <PersistentBackground />
           {children}
         </NeuralMarketProvider>
       </body>
-      <Script src="https://js.puter.com/v2/" strategy="afterInteractive" />
     </html>
   );
 }

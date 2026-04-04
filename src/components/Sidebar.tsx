@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   BarChart3,
@@ -20,7 +19,6 @@ import {
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-import { useNeuralMarket } from "@/context/NeuralMarketContext";
 import { StudentProfile } from "@/lib/student-profile";
 
 function cn(...inputs: ClassValue[]) {
@@ -44,8 +42,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onEditProfile,
   onSignOut,
 }) => {
-  const { flowCoins } = useNeuralMarket();
-
   const menuItems = [
     { id: "DASHBOARD", icon: LayoutDashboard, label: "Dashboard", sub: "System Overview" },
     { id: "STUDY", icon: BookOpen, label: "Study System", sub: "Attention & Recall" },
@@ -122,19 +118,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       <div className="mt-auto space-y-4">
-        <Link
-          href="/market"
-          className="flex items-center justify-between rounded-2xl border border-blue/15 bg-blue/8 px-5 py-4 text-white/80 transition-all hover:border-blue/40 hover:bg-blue/12 hover:text-white"
-        >
-          <div>
-            <p className="text-sm font-bold">Neural Market</p>
-            <p className="text-[10px] font-black uppercase tracking-widest text-white/30">
-              Open standalone store
-            </p>
-          </div>
-          <span className="text-sm font-black text-blue">{flowCoins} FC</span>
-        </Link>
-
         <div className="group relative overflow-hidden rounded-2xl border border-blue/10 bg-gradient-to-br from-blue/10 to-transparent p-5">
           <div className="relative z-10">
             <div className="mb-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-blue">

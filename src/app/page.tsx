@@ -193,18 +193,7 @@ export default function NeuroOS() {
                         {activeTab === 'EXECUTION' && <ExecutionEngine />}
                         
                         {activeTab === 'MARKET' && (
-                           <Marketplace 
-                              coins={coins} 
-                              streak={streak}
-                              unlockedItems={unlockedItems} 
-                              activeTheme={activeTheme} 
-                              activeFont={activeFont}
-                              activeBackdrop={activeBackdrop}
-                              activePomoBg={activePomoBg}
-                              activePomoBtn={activePomoBtn}
-                              onPurchase={handlePurchase}
-                              onEquip={setEquipped}
-                           />
+                           <Marketplace streak={streak} />
                         )}
 
                         {activeTab === 'INSIGHTS' && (
