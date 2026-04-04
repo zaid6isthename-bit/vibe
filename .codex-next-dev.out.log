@@ -53,3 +53,12 @@
  POST /api/generate 200 in 491ms (next.js: 4ms, application-code: 487ms)
 ✓ Compiled in 220ms
 ✓ Compiled in 330ms
+ GET / 200 in 565ms (next.js: 192ms, application-code: 373ms)
+✓ Compiled in 541ms
+ GET / 200 in 554ms (next.js: 161ms, application-code: 393ms)
+ GET / 200 in 1377ms (next.js: 287ms, application-code: 1090ms)
+ GET / 200 in 66ms (next.js: 11ms, application-code: 55ms)
+ GET / 200 in 791ms (next.js: 490ms, application-code: 301ms)
+ GET / 200 in 144ms (next.js: 12ms, application-code: 132ms)
+ GET / 200 in 250ms (next.js: 9ms, application-code: 242ms)
+✓ Compiled in 130ms
