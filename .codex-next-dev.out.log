@@ -1,0 +1,18 @@
+
+> vibe@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.2 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.31.111:3000
+- Environments: .env.local
+✓ Ready in 1339ms
+
+🚀 Gemini — action: SUGGEST_TOPICS | topic: "quantum" | type: PHYSICS
+📡 Gemini Raw (first 300): {"error":{"code":429,"message":"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metri
+🤖 Result: ❌ NULL — check API key and model name
+ POST /api/generate 200 in 764ms (next.js: 421ms, application-code: 343ms)
+🚀 Gemini — action: SUGGEST_TOPICS | topic: "quantum" | type: PHYSICS
+📡 Gemini Raw (first 300): {"error":{"code":429,"message":"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metri
+🤖 Result: ❌ NULL — check API key and model name
+ POST /api/generate 200 in 292ms (next.js: 7ms, application-code: 285ms)
