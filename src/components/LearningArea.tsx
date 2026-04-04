@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AttentionGauge } from './AttentionGauge';
 import { useAttention, AttentionState } from '@/hooks/use-attention';
 import { generateAI } from '@/lib/ai-client';
+import { StudentProfile } from '@/lib/student-profile';
 import { LayoutDashboard, BookOpen, ChevronRight, Zap, Target, BookMarked, HelpCircle, CheckCircle2, Brain } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -17,6 +18,7 @@ function cn(...inputs: ClassValue[]) {
 interface LearningAreaProps {
   topic: string;
   onFinish: (stats: any) => void;
+  studentProfile: StudentProfile;
 }
 
 interface Section {
@@ -27,19 +29,21 @@ interface Section {
   story: string;
 }
 
-export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) => {
+export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish, studentProfile }) => {
   const [sections, setSections] = useState<Section[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [loading, setLoading] = useState(true);
   const [adaptationMode, setAdaptationMode] = useState<'Full' | 'Bullet' | 'Story' | 'Challenge'>('Full');
   const [challenge, setChallenge] = useState<any>(null);
   const [showChallenge, setShowChallenge] = useState(false);
+  const [challengeFeedback, setChallengeFeedback] = useState<{ correct: boolean; answer: string; explanation: string } | null>(null);
   const [contentFlash, setContentFlash] = useState(false);
   const [completedSections, setCompletedSections] = useState<string[]>([]);
   const [stats, setStats] = useState({ correctChallenges: 0, totalChallenges: 0 });
   const [inRecapMode, setInRecapMode] = useState(false);
   const [recapQuestions, setRecapQuestions] = useState<any[]>([]);
   const [recapIdx, setRecapIdx] = useState(0);
+  const [recapFeedback, setRecapFeedback] = useState<{ selected: string; correct: string; explanation: string; isCorrect: boolean } | null>(null);
   
   // New Stages: Thought Process & Flashcards
   const [thoughtProcess, setThoughtProcess] = useState<string>("");
@@ -55,7 +59,7 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
   useEffect(() => {
     const fetchSections = async () => {
       try {
-        const data = await generateAI('GENERATE_SECTIONS', { topic });
+        const data = await generateAI('GENERATE_SECTIONS', { topic }, studentProfile);
         if (Array.isArray(data)) {
            setSections(data);
         } else {
@@ -100,9 +104,10 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
       const data = await generateAI('GENERATE_CHALLENGE', {
         topic,
         content: sections[currentIdx]?.full || topic,
-      });
+      }, studentProfile);
       if (data && data.question && Array.isArray(data.options)) {
         setChallenge(data);
+        setChallengeFeedback(null);
         setShowChallenge(true);
       } else {
         console.error("Invalid challenge format:", data);
@@ -112,16 +117,24 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
     }
   };
 
-  const handleChallengeAnswer = (isCorrect: boolean) => {
+  const handleChallengeAnswer = (selectedOption: string) => {
+    const isCorrect = selectedOption === challenge.correct_answer;
     setStats(prev => ({ 
       correctChallenges: prev.correctChallenges + (isCorrect ? 1 : 0),
       totalChallenges: prev.totalChallenges + 1
     }));
-    
+
+    setChallengeFeedback({
+      correct: isCorrect,
+      answer: challenge.correct_answer,
+      explanation: challenge.explanation || 'Review the key idea and retry.',
+    });
+
     setTimeout(() => {
+      setChallengeFeedback(null);
       setShowChallenge(false);
       setAdaptationMode('Full'); // Reset on success/attempt
-    }, 1500);
+    }, 3200);
   };
 
   const handleNext = async () => {
@@ -134,7 +147,7 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
         // Move to Thought Process stage
         setLoading(true);
         try {
-          const data = await generateAI('GENERATE_THOUGHT_PROCESS', { topic });
+          const data = await generateAI('GENERATE_THOUGHT_PROCESS', { topic }, studentProfile);
           setThoughtProcess(data.process || "AI logic calibrated for maximum retention.");
           setCurrentStage('THOUGHT');
         } catch (e) {
@@ -147,7 +160,7 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
       // Move to Flashcards stage
       setLoading(true);
       try {
-        const data = await generateAI('GENERATE_FLASHCARDS', { topic });
+        const data = await generateAI('GENERATE_FLASHCARDS', { topic }, studentProfile);
         setFlashcards(data || []);
         setCurrentStage('FLASHCARDS');
       } catch (e) {
@@ -164,7 +177,7 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
         // Start Final Recap Quiz
         setLoading(true);
         try {
-           const data = await generateAI('GENERATE_RECAP_QUIZ', { topic, sections });
+           const data = await generateAI('GENERATE_RECAP_QUIZ', { topic, sections }, studentProfile);
            if (Array.isArray(data) && data.length > 0) {
               setRecapQuestions(data);
               setRecapIdx(0);
@@ -183,18 +196,30 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
     }
   };
 
-  const handleRecapAnswer = (isCorrect: boolean) => {
+  const handleRecapAnswer = (selectedOption: string) => {
+    const question = recapQuestions[recapIdx];
+    const isCorrect = selectedOption === question?.correct_answer;
     const nextIdx = recapIdx + 1;
     setStats(prev => ({ 
       correctChallenges: prev.correctChallenges + (isCorrect ? 1 : 0),
       totalChallenges: prev.totalChallenges + 1
     }));
-    
-    if (nextIdx < recapQuestions.length) {
-       setRecapIdx(nextIdx);
-    } else {
-       onFinish({ sections, attention, stats, recapPassed: true });
-    }
+
+    setRecapFeedback({
+      selected: selectedOption,
+      correct: question?.correct_answer || '',
+      explanation: question?.explanation || 'Review the concept and try the next one.',
+      isCorrect,
+    });
+
+    setTimeout(() => {
+      setRecapFeedback(null);
+      if (nextIdx < recapQuestions.length) {
+         setRecapIdx(nextIdx);
+      } else {
+         onFinish({ sections, attention, stats, recapPassed: true });
+      }
+    }, 3600);
   };
 
   if (loading) {
@@ -223,6 +248,7 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
               <BookMarked size={20} />
             </div>
             <div>
+              <p className="text-[10px] uppercase tracking-widest text-teal/70">{studentProfile.board} • Standard {studentProfile.standard}</p>
               <p className="text-[10px] uppercase tracking-widest text-white/40">Section {currentIdx + 1} of {sections.length}</p>
               <h2 className="text-xl font-bold font-display text-white">{currentSection?.title}</h2>
             </div>
@@ -264,7 +290,8 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
                       {recapQuestions[recapIdx]?.options.map((opt: string, i: number) => (
                          <button
                             key={i}
-                            onClick={() => handleRecapAnswer(opt === recapQuestions[recapIdx]?.correct_answer)}
+                            disabled={Boolean(recapFeedback)}
+                            onClick={() => handleRecapAnswer(opt)}
                             className="w-full p-6 text-left rounded-2xl bg-white/5 border border-white/10 hover:border-teal hover:bg-teal/5 transition-all group relative overflow-hidden"
                          >
                             <div className="flex items-center gap-4">
@@ -276,6 +303,26 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
                          </button>
                       ))}
                    </div>
+
+                   {recapFeedback && (
+                      <div className={cn(
+                        "rounded-2xl border p-6 space-y-3",
+                        recapFeedback.isCorrect ? "border-teal/30 bg-teal/10" : "border-red/30 bg-red/10"
+                      )}>
+                         <p className="text-xs font-black uppercase tracking-[0.2em] text-white/50">
+                           {recapFeedback.isCorrect ? 'Correct Answer' : 'Review This Answer'}
+                         </p>
+                         {!recapFeedback.isCorrect && (
+                           <p className="text-sm text-white/70">
+                             You chose: <span className="font-bold text-red">{recapFeedback.selected}</span>
+                           </p>
+                         )}
+                         <p className="text-sm text-white/80">
+                           Correct answer: <span className="font-bold text-teal">{recapFeedback.correct}</span>
+                         </p>
+                         <p className="text-sm text-white/65 leading-relaxed">{recapFeedback.explanation}</p>
+                      </div>
+                   )}
                 </div>
 
                 <div className="absolute -bottom-20 -right-20 opacity-[0.03] rotate-12 pointer-events-none">
@@ -434,7 +481,8 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
                    {challenge.options.map((opt: string, i: number) => (
                       <button
                          key={i}
-                         onClick={() => handleChallengeAnswer(opt === challenge.correct_answer)}
+                         disabled={Boolean(challengeFeedback)}
+                         onClick={() => handleChallengeAnswer(opt)}
                          className="p-5 text-left rounded-xl border border-white/5 bg-white/5 hover:border-teal/40 hover:bg-teal/5 transition-all group relative"
                       >
                          <div className="absolute left-0 inset-y-0 w-1 bg-teal scale-y-0 group-hover:scale-y-100 transition-transform origin-top" />
@@ -442,6 +490,21 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
                       </button>
                    ))}
                 </div>
+
+                {challengeFeedback && (
+                  <div className={cn(
+                    "mt-6 rounded-2xl p-5 border",
+                    challengeFeedback.correct ? "bg-teal/10 border-teal/30" : "bg-red/10 border-red/30"
+                  )}>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2">
+                      {challengeFeedback.correct ? 'Correct' : 'Correct Answer'}
+                    </p>
+                    <p className="text-sm text-white/75">
+                      Answer: <span className="font-bold text-teal">{challengeFeedback.answer}</span>
+                    </p>
+                    <p className="mt-2 text-sm text-white/65 leading-relaxed">{challengeFeedback.explanation}</p>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}

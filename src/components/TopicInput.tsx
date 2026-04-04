@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { generateAI } from '@/lib/ai-client';
 import { Search, Sparkles, BookOpen, Clock, ArrowRight } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -31,12 +32,7 @@ export const TopicInput: React.FC<TopicInputProps> = ({ onStart }) => {
     if (topic.length < 3) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'SUGGEST_TOPICS', payload: { topic } }),
-      });
-      const data = await res.json();
+      const data = await generateAI('SUGGEST_TOPICS', { topic });
       if (Array.isArray(data)) setSuggestions(data);
     } catch (e) {
       console.error(e);

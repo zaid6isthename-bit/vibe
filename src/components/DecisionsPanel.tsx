@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { generateAI } from '@/lib/ai-client';
+import { StudentProfile } from '@/lib/student-profile';
 import { 
   Scale, MessageSquare, ShieldCheck, Zap, AlertCircle, TrendingUp, TrendingDown, Target, Brain, Info, CheckCircle2, XCircle, ArrowRight, RefreshCw, Sparkles 
 } from 'lucide-react';
@@ -12,7 +14,11 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const DecisionsPanel: React.FC = () => {
+interface DecisionsPanelProps {
+  studentProfile: StudentProfile;
+}
+
+export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ studentProfile }) => {
   const [decisionTitle, setDecisionTitle] = useState('');
   const [loading, setLoading] = useState(false);
   const [outcome, setOutcome] = useState<any>(null);
@@ -22,15 +28,9 @@ export const DecisionsPanel: React.FC = () => {
     if (!decisionTitle) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'DECISION_DEBATE', payload: { topic: decisionTitle } })
-      });
-      
-      const data = await res.json();
-      
-      if (!res.ok || data.error || !data.breakdown) {
+      const data = await generateAI('DECISION_DEBATE', { topic: decisionTitle }, studentProfile);
+
+      if (!data || data.error || !data.breakdown) {
         throw new Error(data.error || 'Invalid API Response');
       }
 
@@ -38,13 +38,32 @@ export const DecisionsPanel: React.FC = () => {
       setActiveStep('DEBATE');
     } catch (e) {
       console.error(e);
-      // Fallback for demo if API fails
+      const examContext = `${studentProfile.board} standard ${studentProfile.standard}`;
       setOutcome({
-        breakdown: { goal: decisionTitle, clarity: 85, options: ["Option A", "Option B"] },
-        debate: [{ role: 'Judge', content: 'Neural simulation suggests focusing on short-term stability first.' }],
-        recommendation: "Neutral Path",
-        confidence: 70,
-        prosCons: []
+        breakdown: {
+          goal: `Resolve "${decisionTitle}" in a way that protects progress in ${examContext}`,
+          clarity: 78,
+          options: [
+            'Take the academically safer option',
+            'Run a small low-risk trial first',
+            'Delay until the next study checkpoint',
+          ],
+        },
+        prosCons: [
+          {
+            opt: 'Run a small low-risk trial first',
+            pros: ['Lets you gather real evidence', 'Keeps disruption to study schedule low'],
+            cons: ['May feel slower emotionally', 'Needs a clear success metric'],
+            risk: 'You may drift without defining a review date',
+          },
+        ],
+        debate: [
+          { role: 'Optimist', content: `If this choice improves energy, focus, or time management, it could strengthen your ${examContext} performance.` },
+          { role: 'Skeptic', content: `If it steals revision hours or adds stress close to assessments, it may hurt results more than it helps.` },
+          { role: 'Judge', content: 'Choose the option that preserves revision consistency, sleep, and weekly momentum unless you have strong evidence that the riskier path will pay off soon.' },
+        ],
+        recommendation: 'Test the idea in a small reversible way before making a full commitment',
+        confidence: 74,
       });
       setActiveStep('DEBATE');
     } finally {
@@ -63,6 +82,7 @@ export const DecisionsPanel: React.FC = () => {
                 Decision <span className="text-purple-400">Copilot</span>
              </h2>
              <p className="text-sm text-white/40 font-medium tracking-widest uppercase">Logic Engine & AI Debate Mode</p>
+             <p className="text-xs text-white/30 font-bold uppercase tracking-[0.2em]">{studentProfile.board} • Standard {studentProfile.standard} • {studentProfile.country}</p>
           </div>
        </div>
 

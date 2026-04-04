@@ -8,7 +8,9 @@ import { LearningArea } from '@/components/LearningArea';
 import { DecisionsPanel } from '@/components/DecisionsPanel';
 import { ExecutionEngine } from '@/components/ExecutionEngine';
 import { Marketplace } from '@/components/Marketplace';
+import { StudentAuthGate } from '@/components/StudentAuthGate';
 import { useNeuroWallet } from '@/hooks/use-neuro-wallet';
+import { useStudentProfile } from '@/hooks/use-student-profile';
 import { PomodoroTimer } from '@/components/PomodoroTimer';
 import { BarChart3, Zap } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
@@ -24,6 +26,7 @@ export default function NeuroOS() {
   const [activeTab, setActiveTab] = useState<NeuroModule>('DASHBOARD');
   const [studyTopic, setStudyTopic] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [showProfileEditor, setShowProfileEditor] = useState(false);
 
   // Gamification Wallet
   const { 
@@ -31,6 +34,7 @@ export default function NeuroOS() {
     activeTheme, activeFont, activeBackdrop, activePomoBg, activePomoBtn,
     addCoins, spendCoins, updateStreak, setEquipped 
   } = useNeuroWallet();
+  const { profile, ready, saveProfile, clearProfile, defaultDraft } = useStudentProfile();
 
   // Fix Hydration Mismatch
   useEffect(() => {
@@ -67,18 +71,23 @@ export default function NeuroOS() {
     }
   };
 
+  if (!ready || !mounted) {
+    return (
+      <main className={cn("flex h-screen text-foreground selection:bg-blue selection:text-background relative overflow-hidden", getFontClass())}>
+        <div className="fixed inset-0 z-[1000] bg-transparent flex items-center justify-center">
+          <div className="w-10 h-10 border-2 border-blue/20 border-t-blue rounded-full animate-spin" />
+        </div>
+      </main>
+    );
+  }
+
+  if (!profile) {
+    return <StudentAuthGate initialProfile={defaultDraft} onSubmit={saveProfile} />;
+  }
+
   return (
     <main className={cn("flex h-screen text-foreground selection:bg-blue selection:text-background relative overflow-hidden", getFontClass())}>
       <AnimatePresence>
-        {!mounted ? (
-          <motion.div 
-            key="interface-loader"
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[1000] bg-transparent flex items-center justify-center"
-          >
-             <div className="w-10 h-10 border-2 border-blue/20 border-t-blue rounded-full animate-spin" />
-          </motion.div>
-        ) : (
           <motion.div 
             key="interface-main"
             initial={{ opacity: 0 }}
@@ -86,7 +95,19 @@ export default function NeuroOS() {
             className="flex-1 flex w-full relative h-screen overflow-hidden"
           >
             {/* OS Layout */}
-            <Sidebar activeTab={activeTab} onTabChange={handleTabChange} coins={coins} />
+            <Sidebar
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              coins={coins}
+              studentProfile={profile}
+              onEditProfile={() => setShowProfileEditor(true)}
+              onSignOut={() => {
+                clearProfile();
+                setShowProfileEditor(false);
+                setStudyTopic('');
+                setActiveTab('DASHBOARD');
+              }}
+            />
 
             {/* Main Workspace */}
             <div className="flex-1 flex flex-col h-screen relative z-30 overflow-hidden">
@@ -104,6 +125,7 @@ export default function NeuroOS() {
                           <Dashboard 
                             onModuleStart={handleTabChange} 
                             onStudyStart={handleStudyStart}
+                            studentProfile={profile}
                           />
                         )}
                         
@@ -138,6 +160,7 @@ export default function NeuroOS() {
                               ) : (
                                  <LearningArea 
                                    topic={studyTopic} 
+                                   studentProfile={profile}
                                    onFinish={(stats) => {
                                      setStudyTopic(''); // Reset so user can start fresh next time
                                      handleStudyFinish(stats);
@@ -157,7 +180,7 @@ export default function NeuroOS() {
                            </div>
                         )}
 
-                        {activeTab === 'DECISIONS' && <DecisionsPanel />}
+                        {activeTab === 'DECISIONS' && <DecisionsPanel studentProfile={profile} />}
                         {activeTab === 'EXECUTION' && <ExecutionEngine />}
                         
                         {activeTab === 'MARKET' && (
@@ -210,6 +233,34 @@ export default function NeuroOS() {
                      </div>
                   </div>
                </div>
+            </div>
+          </motion.div>
+      </AnimatePresence>
+      <AnimatePresence>
+        {showProfileEditor && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[1200] bg-black/70 backdrop-blur-xl overflow-y-auto"
+          >
+            <div className="min-h-screen flex items-center justify-center p-6">
+              <div className="relative w-full max-w-5xl">
+                <button
+                  onClick={() => setShowProfileEditor(false)}
+                  className="absolute right-6 top-6 z-10 rounded-full bg-white/8 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-white/70 hover:bg-white/14"
+                >
+                  Close
+                </button>
+                <StudentAuthGate
+                  initialProfile={profile}
+                  mode="signin"
+                  onSubmit={(nextProfile) => {
+                    saveProfile(nextProfile);
+                    setShowProfileEditor(false);
+                  }}
+                />
+              </div>
             </div>
           </motion.div>
         )}

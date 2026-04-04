@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { StudentProfile } from '@/lib/student-profile';
 import { 
   LayoutDashboard, BookOpen, Scale, Zap, BarChart3, Settings, Brain, LogOut, Info, ShieldCheck, Cpu, ShoppingBag, Clock 
 } from 'lucide-react';
@@ -16,9 +17,12 @@ interface SidebarProps {
   activeTab: string;
   onTabChange: (tab: any) => void;
   coins: number;
+  studentProfile: StudentProfile;
+  onEditProfile: () => void;
+  onSignOut: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, coins }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, coins, studentProfile, onEditProfile, onSignOut }) => {
   const menuItems = [
     { id: 'DASHBOARD', icon: LayoutDashboard, label: 'Dashboard', sub: 'System Overview' },
     { id: 'STUDY', icon: BookOpen, label: 'Study System', sub: 'Attention & Recall' },
@@ -94,21 +98,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, coins 
            </div>
         </div>
 
-        <button className="w-full py-4 flex items-center gap-4 px-5 text-white/30 hover:text-white hover:bg-white/5 rounded-2xl transition-all">
+        <button onClick={onEditProfile} className="w-full py-4 flex items-center gap-4 px-5 text-white/30 hover:text-white hover:bg-white/5 rounded-2xl transition-all">
           <Settings size={20} />
-          <span className="text-sm font-bold">Preferences</span>
+          <span className="text-sm font-bold">Student Profile</span>
         </button>
         
         <div className="pt-2 border-t border-white/5">
            <div className="flex items-center gap-4 px-5 py-4">
               <div className="w-10 h-10 rounded-full bg-blue/10 border border-blue/20 flex items-center justify-center p-1 uppercase font-black text-blue">
-                 ZD
+                 {studentProfile.name.slice(0, 2)}
               </div>
               <div>
-                 <p className="text-sm font-bold text-white">Student Alpha</p>
-                 <p className="text-[10px] uppercase font-black text-white/20 tracking-widest leading-none">Focus Tier 4</p>
+                 <p className="text-sm font-bold text-white">{studentProfile.name}</p>
+                 <p className="text-[10px] uppercase font-black text-white/20 tracking-widest leading-none">{studentProfile.board} • Std {studentProfile.standard}</p>
               </div>
-              <LogOut size={16} className="ml-auto text-white/20 hover:text-red transition-colors cursor-pointer" />
+              <button onClick={onSignOut} className="ml-auto text-white/20 hover:text-red transition-colors cursor-pointer">
+                <LogOut size={16} />
+              </button>
            </div>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { StudentProfile } from '@/lib/student-profile';
 import { 
   Zap, Brain, Target, Shield, Clock, BookOpen, Scale, Cpu, ChevronRight, Sparkles, TrendingUp 
 } from 'lucide-react';
@@ -15,9 +16,10 @@ function cn(...inputs: ClassValue[]) {
 interface DashboardProps {
   onModuleStart: (tab: any) => void;
   onStudyStart: (topic: string) => void;
+  studentProfile: StudentProfile;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onModuleStart, onStudyStart }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onModuleStart, onStudyStart, studentProfile }) => {
   const [searchValue, setSearchValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -46,10 +48,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onModuleStart, onStudyStar
              <Shield size={14} /> Neural Interface Active
            </motion.div>
            <h2 className="text-6xl font-black font-display tracking-tight text-white leading-tight">
-             Good evening, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue to-purple-400">Student Alpha</span>.
+             Good evening, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue to-purple-400">{studentProfile.name}</span>.
            </h2>
            <p className="text-xl text-white/40 max-w-xl font-medium tracking-wide">
-             NeuroOS has optimized your cognitive pathway. Today looks focused.
+             NeuroOS is tuned for {studentProfile.board}, standard {studentProfile.standard}, with outputs shaped for exam-ready study.
            </p>
         </div>
         

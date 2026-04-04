@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { askClaude } from '@/lib/claude';
+import { StudentProfile, formatStudentContext } from '@/lib/student-profile';
 
 type TopicType =
   | 'MATERIAL_OR_CHEMICAL'
@@ -332,14 +333,18 @@ export async function POST(req: Request) {
   try {
     const { action, payload } = await req.json();
     const topic = payload?.topic || 'Unknown Topic';
+    const studentProfile = (payload?.studentProfile || null) as StudentProfile | null;
     const topicType = detectTopicType(topic);
     const topicGuidance = getTopicGuidance(topicType, topic);
+    const studentContext = formatStudentContext(studentProfile);
 
     let prompt = '';
 
     switch (action) {
       case 'GENERATE_SECTIONS':
         prompt = `You are a world-class professor and subject-matter expert in "${topic}". Create a 6-section university-level study guide that a student can use to deeply understand "${topic}".
+
+${studentContext}
 
 TOPIC TYPE DETECTED: ${topicType}
 REQUIRED SECTION STRUCTURE:
@@ -352,6 +357,7 @@ Mandatory rules:
 - Each object must contain id, title, full, bullet, and story
 - The "bullet" field must be a newline-separated list of 4 specific bullets
 - The "story" field must be 2-3 sentences explaining a specific mechanism of "${topic}"
+- Tailor the output to the student's age, standard, country, board, and exam needs
 
 Return this shape only:
 [
@@ -367,6 +373,8 @@ Return this shape only:
 
       case 'GENERATE_CHALLENGE':
         prompt = `A student is studying "${topic}" and just read this content:
+
+${studentContext}
 
 "${payload.content}"
 
@@ -390,10 +398,13 @@ Return only valid JSON:
       case 'GENERATE_FLASHCARDS':
         prompt = `Create 8 active-recall flashcards for a student studying "${topic}".
 
+${studentContext}
+
 Rules:
 - Every front must ask about a specific fact, formula, name, date, number, mechanism, or process
 - Every back must give a specific answer
 - Vary question types
+- Make every flashcard topic-specific and exam-relevant
 
 Return only valid JSON:
 [{ "front": "string", "back": "string" }]`;
@@ -401,6 +412,8 @@ Return only valid JSON:
 
       case 'GENERATE_THOUGHT_PROCESS':
         prompt = `You are the AI tutor who just taught "${topic}" (topic type: ${topicType}) to a student.
+
+${studentContext}
 
 Write a first-person explanation in 3-4 focused sentences covering:
 1. Why you ordered the sections the way you did
@@ -421,6 +434,8 @@ Return only valid JSON:
             .join('\n\n') || '';
 
         prompt = `Create a 10-question final assessment quiz for a student who just completed studying "${topic}".
+
+${studentContext}
 
 THE STUDENT STUDIED THIS CONTENT:
 ${sectionContext}
@@ -443,6 +458,8 @@ Return only valid JSON:
 
       case 'DECISION_DEBATE':
         prompt = `You are a hyper-rational strategic advisor. The user needs to make this decision:
+
+${studentContext}
 
 "${topic}"
 
@@ -472,7 +489,11 @@ Return this exact JSON structure only:
         break;
 
       case 'SUGGEST_TOPICS':
-        prompt = `The user typed "${topic}" as a partial search query. Suggest 5 specific, intellectually rich study topics. Return only a valid JSON array of 5 strings.`;
+        prompt = `The user typed "${topic}" as a partial search query.
+
+${studentContext}
+
+Suggest 5 specific, intellectually rich study topics. Return only a valid JSON array of 5 strings.`;
         break;
 
       default:

@@ -6,19 +6,38 @@
 - Local:         http://localhost:3000
 - Network:       http://192.168.31.111:3000
 - Environments: .env.local
-✓ Ready in 846ms
+✓ Ready in 878ms
 
- GET / 200 in 1199ms (next.js: 706ms, application-code: 493ms)
- GET / 200 in 116ms (next.js: 9ms, application-code: 106ms)
- POST /api/generate 200 in 977ms (next.js: 264ms, application-code: 713ms)
- POST /api/generate 200 in 1191ms (next.js: 198ms, application-code: 993ms)
- POST /api/generate 200 in 623ms (next.js: 10ms, application-code: 613ms)
- POST /api/generate 200 in 478ms (next.js: 5ms, application-code: 473ms)
- POST /api/generate 200 in 483ms (next.js: 5ms, application-code: 477ms)
-✓ Compiled in 717ms
- GET / 200 in 1485ms (next.js: 497ms, application-code: 988ms)
- GET / 200 in 229ms (next.js: 105ms, application-code: 124ms)
- GET / 200 in 806ms (next.js: 205ms, application-code: 601ms)
- GET / 200 in 248ms (next.js: 19ms, application-code: 229ms)
- GET / 200 in 247ms (next.js: 164ms, application-code: 83ms)
- GET / 200 in 845ms (next.js: 141ms, application-code: 703ms)
+ GET / 200 in 136ms (next.js: 22ms, application-code: 114ms)
+ GET / 200 in 1084ms (next.js: 355ms, application-code: 729ms)
+ GET / 200 in 140ms (next.js: 9ms, application-code: 131ms)
+✓ Compiled in 355ms
+✓ Compiled in 214ms
+ GET / 200 in 248ms (next.js: 101ms, application-code: 147ms)
+ GET / 200 in 64ms (next.js: 11ms, application-code: 53ms)
+ GET / 200 in 319ms (next.js: 85ms, application-code: 234ms)
+ GET / 200 in 177ms (next.js: 30ms, application-code: 147ms)
+ GET / 200 in 69ms (next.js: 9ms, application-code: 60ms)
+✓ Compiled in 123ms
+✓ Compiled in 116ms
+✓ Compiled in 117ms
+✓ Compiled in 212ms
+✓ Compiled in 127ms
+✓ Compiled in 111ms
+ GET / 200 in 456ms (next.js: 116ms, application-code: 340ms)
+✓ Compiled in 101ms
+ GET / 200 in 392ms (next.js: 117ms, application-code: 275ms)
+✓ Compiled in 321ms
+ GET / 200 in 414ms (next.js: 105ms, application-code: 309ms)
+✓ Compiled in 113ms
+✓ Compiled in 280ms
+ GET / 200 in 270ms (next.js: 102ms, application-code: 168ms)
+ GET / 200 in 86ms (next.js: 8ms, application-code: 79ms)
+ POST /api/generate 200 in 853ms (next.js: 187ms, application-code: 665ms)
+ POST /api/generate 200 in 422ms (next.js: 4ms, application-code: 418ms)
+✓ Compiled in 129ms
+ GET / 200 in 504ms (next.js: 113ms, application-code: 390ms)
+ GET / 200 in 100ms (next.js: 7ms, application-code: 94ms)
+ GET / 200 in 89ms (next.js: 8ms, application-code: 82ms)
+ GET / 200 in 95ms (next.js: 7ms, application-code: 88ms)
+✓ Compiled in 128ms

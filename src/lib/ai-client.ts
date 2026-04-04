@@ -1,5 +1,7 @@
 "use client";
 
+import { StudentProfile, formatStudentContext } from '@/lib/student-profile';
+
 type GenerateAction =
   | 'GENERATE_SECTIONS'
   | 'GENERATE_CHALLENGE'
@@ -33,6 +35,41 @@ type PuterAPI = {
 declare global {
   interface Window {
     puter?: PuterAPI;
+  }
+}
+
+function isValidActionResult(action: GenerateAction, value: unknown): boolean {
+  switch (action) {
+    case 'GENERATE_SECTIONS':
+    case 'GENERATE_FLASHCARDS':
+    case 'GENERATE_RECAP_QUIZ':
+    case 'SUGGEST_TOPICS':
+      return Array.isArray(value) && value.length > 0;
+    case 'GENERATE_CHALLENGE':
+      return Boolean(
+        value &&
+        typeof value === 'object' &&
+        'question' in value &&
+        'options' in value &&
+        Array.isArray((value as { options: unknown[] }).options),
+      );
+    case 'GENERATE_THOUGHT_PROCESS':
+      return Boolean(
+        value &&
+        typeof value === 'object' &&
+        'process' in value &&
+        typeof (value as { process?: unknown }).process === 'string',
+      );
+    case 'DECISION_DEBATE':
+      return Boolean(
+        value &&
+        typeof value === 'object' &&
+        'breakdown' in value &&
+        'debate' in value &&
+        'recommendation' in value,
+      );
+    default:
+      return false;
   }
 }
 
@@ -117,38 +154,70 @@ function extractText(response: PuterChatResponse): string {
 }
 
 function extractJson(text: string): unknown {
-  const arrayStart = text.indexOf('[');
-  const objectStart = text.indexOf('{');
-  const hasArray = arrayStart !== -1;
-  const hasObject = objectStart !== -1;
+  const cleaned = text.trim();
+  const codeBlockMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidate = codeBlockMatch?.[1]?.trim() || cleaned;
 
-  const start =
-    hasArray && hasObject
-      ? Math.min(arrayStart, objectStart)
-      : hasArray
-        ? arrayStart
-        : objectStart;
+  const arrayStart = candidate.indexOf('[');
+  const objectStart = candidate.indexOf('{');
+  const starts = [arrayStart, objectStart].filter((index) => index !== -1);
 
-  if (start === -1) {
+  if (starts.length === 0) {
     throw new Error('No JSON found in Puter response');
   }
 
-  const end = Math.max(text.lastIndexOf(']'), text.lastIndexOf('}'));
-  if (end <= start) {
-    throw new Error('Incomplete JSON in Puter response');
+  for (const start of starts.sort((a, b) => a - b)) {
+    const openChar = candidate[start];
+    const closeChar = openChar === '[' ? ']' : '}';
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+
+    for (let i = start; i < candidate.length; i += 1) {
+      const char = candidate[i];
+
+      if (inString) {
+        if (escaped) {
+          escaped = false;
+        } else if (char === '\\') {
+          escaped = true;
+        } else if (char === '"') {
+          inString = false;
+        }
+        continue;
+      }
+
+      if (char === '"') {
+        inString = true;
+        continue;
+      }
+
+      if (char === openChar) {
+        depth += 1;
+      } else if (char === closeChar) {
+        depth -= 1;
+        if (depth === 0) {
+          const jsonSlice = candidate.slice(start, i + 1);
+          return JSON.parse(jsonSlice);
+        }
+      }
+    }
   }
 
-  return JSON.parse(text.slice(start, end + 1));
+  throw new Error('Incomplete JSON in Puter response');
 }
 
-function buildPrompt(action: GenerateAction, payload: Record<string, unknown>) {
+function buildPrompt(action: GenerateAction, payload: Record<string, unknown>, profile?: StudentProfile | null) {
   const topic = String(payload.topic || 'Unknown Topic');
   const topicType = getTopicType(topic);
   const topicGuidance = getTopicGuidance(topicType, topic);
+  const studentContext = formatStudentContext(profile);
 
   switch (action) {
     case 'GENERATE_SECTIONS':
       return `You are a world-class professor and subject-matter expert in "${topic}". Create a 6-section university-level study guide that a student can use to deeply understand "${topic}".
+
+${studentContext}
 
 TOPIC TYPE DETECTED: ${topicType}
 REQUIRED SECTION STRUCTURE:
@@ -161,6 +230,9 @@ Rules:
 - Each object must contain id, title, full, bullet, and story
 - The "bullet" field must contain 4 newline-separated bullets
 - Include real facts, formulas, names, examples, or mechanisms whenever appropriate
+- Tailor the depth, terminology, and examples to the student's age, standard, country, and board
+- Make the material strong enough for exam preparation at the student's level
+- Mention syllabus-relevant angles, likely board expectations, and common exam traps when appropriate
 
 Return only:
 [
@@ -175,9 +247,16 @@ Return only:
     case 'GENERATE_CHALLENGE':
       return `A student is studying "${topic}" and just read this content:
 
+${studentContext}
+
 "${String(payload.content || '')}"
 
 Create one multiple-choice comprehension question.
+
+Rules:
+- Make it appropriate for the student's level and board
+- The distractors must be plausible but clearly wrong when the content is understood
+- The explanation must teach the concept, not just reveal the answer
 
 Return only valid JSON:
 {
@@ -190,10 +269,21 @@ Return only valid JSON:
     case 'GENERATE_FLASHCARDS':
       return `Create 8 active-recall flashcards for a student studying "${topic}".
 
+${studentContext}
+
+Rules:
+- Every flashcard must be directly tied to "${topic}", not generic study advice
+- Cover definitions, mechanisms, formulas, examples, comparisons, misconceptions, and exam-relevant traps
+- At least 3 flashcards must contain concrete context such as a real example, formula, step, or board-style distinction
+- Tailor the difficulty to the student's level and board
+- The answer side must be complete enough to revise from without needing the original lesson
+
 Return only valid JSON:
 [{ "front": "string", "back": "string" }]`;
     case 'GENERATE_THOUGHT_PROCESS':
       return `You are the AI tutor who just taught "${topic}".
+
+${studentContext}
 
 Write a first-person explanation in 3-4 focused sentences covering:
 1. Why you ordered the sections that way
@@ -210,8 +300,15 @@ Return only valid JSON:
 
       return `Create a 10-question final assessment quiz for a student who just completed studying "${topic}".
 
+${studentContext}
+
 THE STUDENT STUDIED THIS CONTENT:
 ${sectionContext}
+
+Rules:
+- Tailor the difficulty and language to the student's board and standard
+- Mix recall, application, and misconception-check questions
+- Ensure each explanation helps the student learn how to avoid similar mistakes in the exam
 
 Return only valid JSON:
 [{
@@ -224,7 +321,15 @@ Return only valid JSON:
     case 'DECISION_DEBATE':
       return `You are a hyper-rational strategic advisor. The user needs to make this decision:
 
+${studentContext}
+
 "${topic}"
+
+Rules:
+- Use the student's age, stage, country, and board context when relevant
+- If the question is academic, optimize for exam performance, workload, and syllabus reality
+- If the question is personal, keep advice age-appropriate, concrete, and realistic
+- Avoid generic motivational language; make the output directly useful
 
 Return only valid JSON:
 {
@@ -250,16 +355,20 @@ Return only valid JSON:
   "confidence": 0
 }`;
     case 'SUGGEST_TOPICS':
-      return `The user typed "${topic}" as a partial search query. Suggest 5 specific, intellectually rich study topics. Return only a valid JSON array of 5 strings.`;
+      return `The user typed "${topic}" as a partial search query.
+
+${studentContext}
+
+Suggest 5 specific, intellectually rich study topics that fit the student's level and likely syllabus. Return only a valid JSON array of 5 strings.`;
   }
 }
 
-async function callPuter(action: GenerateAction, payload: Record<string, unknown>) {
+async function callPuter(action: GenerateAction, payload: Record<string, unknown>, profile?: StudentProfile | null) {
   if (typeof window === 'undefined' || !window.puter?.ai?.chat) {
     return null;
   }
 
-  const prompt = buildPrompt(action, payload);
+  const prompt = buildPrompt(action, payload, profile);
   const response = await window.puter.ai.chat(prompt, {
     model: 'claude-sonnet-4-6',
     max_tokens: 4000,
@@ -270,11 +379,18 @@ async function callPuter(action: GenerateAction, payload: Record<string, unknown
   return extractJson(text);
 }
 
-export async function generateAI(action: GenerateAction, payload: Record<string, unknown>) {
+export async function generateAI(
+  action: GenerateAction,
+  payload: Record<string, unknown>,
+  profile?: StudentProfile | null,
+) {
   try {
-    const puterResult = await callPuter(action, payload);
-    if (puterResult) {
+    const puterResult = await callPuter(action, payload, profile);
+    if (isValidActionResult(action, puterResult)) {
       return puterResult;
+    }
+    if (puterResult !== null) {
+      console.warn(`Ignoring malformed Puter response for ${action}`, puterResult);
     }
   } catch (error) {
     console.error('Puter client generation failed:', error);
@@ -283,12 +399,18 @@ export async function generateAI(action: GenerateAction, payload: Record<string,
   const res = await fetch('/api/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action, payload }),
+    body: JSON.stringify({ action, payload: { ...payload, studentProfile: profile } }),
   });
 
   if (!res.ok) {
     throw new Error(`Generation failed with status ${res.status}`);
   }
 
-  return res.json();
+  const serverResult = await res.json();
+
+  if (!isValidActionResult(action, serverResult)) {
+    throw new Error(`Malformed ${action} response`);
+  }
+
+  return serverResult;
 }

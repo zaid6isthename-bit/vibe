@@ -1,6 +1,9 @@
-Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CZjMLtaPQKdWeUoAdQMkp"}
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CZjNnhRWtWr8cNXNjVteB"}
     at async askClaude (src\lib\claude.ts:48:22)
-    at async POST (src\app\api\generate\route.ts:482:24)
+    at async POST (src\app\api\generate\route.ts:503:24)
   46 |   try {
   47 |     const anthropic = getClient();
 > 48 |     const response = await anthropic.messages.create({
@@ -10,39 +13,39 @@ Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_reques
   51 |       system: FLOW_IQ_SYSTEM_PROMPT, {
   status: 400,
   headers: Headers {
-    date: 'Sat, 04 Apr 2026 20:20:23 GMT',
+    date: 'Sat, 04 Apr 2026 20:39:20 GMT',
     'content-type': 'application/json',
     'transfer-encoding': 'chunked',
     connection: 'keep-alive',
     'x-should-retry': 'false',
-    'request-id': 'req_011CZjMLtaPQKdWeUoAdQMkp',
+    'request-id': 'req_011CZjNnhRWtWr8cNXNjVteB',
     'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
     'anthropic-organization-id': 'f062a860-e2f6-4365-9592-2486220df78d',
     server: 'cloudflare',
-    'x-envoy-upstream-service-time': '32',
+    'x-envoy-upstream-service-time': '14',
     'content-encoding': 'gzip',
     vary: 'Accept-Encoding',
-    'server-timing': 'x-originResponse;dur=35',
-    'set-cookie': '_cfuvid=gJuKLwRSDQihQVsvHLZmTCklFWqGsFjbP0V_Mf0_i5E-1775334022.9311244-1.0.1.1-rGaJQNwM0TBKsa2Uu_gdGLNsxjKLRjasgGPUrsCfGw0; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.anthropic.com',
+    'server-timing': 'x-originResponse;dur=15',
+    'set-cookie': '_cfuvid=r4VyXmNCK9RDvdfIjdDGkwOWqDAxkNN0YQFLt0Un6o8-1775335159.8640914-1.0.1.1-A24T4Ib45.qTj348ewxowbVkmc0R7gA8LxMG8q.JA7U; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.anthropic.com',
     'x-robots-tag': 'none',
     'cf-cache-status': 'DYNAMIC',
     'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
-    'cf-ray': '9e73036b597cdb81-BOM'
+    'cf-ray': '9e731f2d293947e2-BOM'
   },
-  requestID: 'req_011CZjMLtaPQKdWeUoAdQMkp',
+  requestID: 'req_011CZjNnhRWtWr8cNXNjVteB',
   error: {
     type: 'error',
     error: {
       type: 'invalid_request_error',
       message: 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'
     },
-    request_id: 'req_011CZjMLtaPQKdWeUoAdQMkp'
+    request_id: 'req_011CZjNnhRWtWr8cNXNjVteB'
   },
   type: 'invalid_request_error'
 }
-Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CZjMLtcsJUQFzFEDHJ9Sk"}
+Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CZjNnpUBKeMUxs6pfCqch"}
     at async askClaude (src\lib\claude.ts:48:22)
-    at async POST (src\app\api\generate\route.ts:482:24)
+    at async POST (src\app\api\generate\route.ts:503:24)
   46 |   try {
   47 |     const anthropic = getClient();
 > 48 |     const response = await anthropic.messages.create({
@@ -52,151 +55,83 @@ Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_reques
   51 |       system: FLOW_IQ_SYSTEM_PROMPT, {
   status: 400,
   headers: Headers {
-    date: 'Sat, 04 Apr 2026 20:20:23 GMT',
+    date: 'Sat, 04 Apr 2026 20:39:21 GMT',
     'content-type': 'application/json',
-    'content-length': '234',
+    'transfer-encoding': 'chunked',
     connection: 'keep-alive',
     'x-should-retry': 'false',
-    'request-id': 'req_011CZjMLtcsJUQFzFEDHJ9Sk',
+    'request-id': 'req_011CZjNnpUBKeMUxs6pfCqch',
     'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
     'anthropic-organization-id': 'f062a860-e2f6-4365-9592-2486220df78d',
     server: 'cloudflare',
-    'x-envoy-upstream-service-time': '49',
-    'server-timing': 'x-originResponse;dur=51',
-    'set-cookie': '_cfuvid=wU0eexq3lckkK1BfklqvcONO.Z9J0FK_M8rweEketMA-1775334022.943588-1.0.1.1-oBRnQ6s564iori9YsaYaqF.rv.453qFnOGEFPBz3gB4; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.anthropic.com',
+    'x-envoy-upstream-service-time': '13',
+    'content-encoding': 'gzip',
+    vary: 'Accept-Encoding',
+    'server-timing': 'x-originResponse;dur=15',
+    'set-cookie': '_cfuvid=V0CxVy1.LcHhWIsb5H3ud7Q9iLWxoi4lmbEKguKCKvM-1775335161.511135-1.0.1.1-PmIilP1wDydp5cclPGhHv.xTed8yczx7mV5_dk_VHTc; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.anthropic.com',
     'x-robots-tag': 'none',
     'cf-cache-status': 'DYNAMIC',
     'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
-    'cf-ray': '9e73036b6c0c3a1a-BOM'
+    'cf-ray': '9e731f377b8447e2-BOM'
   },
-  requestID: 'req_011CZjMLtcsJUQFzFEDHJ9Sk',
+  requestID: 'req_011CZjNnpUBKeMUxs6pfCqch',
   error: {
     type: 'error',
     error: {
       type: 'invalid_request_error',
       message: 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'
     },
-    request_id: 'req_011CZjMLtcsJUQFzFEDHJ9Sk'
+    request_id: 'req_011CZjNnpUBKeMUxs6pfCqch'
   },
   type: 'invalid_request_error'
 }
-Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CZjMPtXVef6PfB4xNQTka"}
-    at async askClaude (src\lib\claude.ts:48:22)
-    at async POST (src\app\api\generate\route.ts:482:24)
-  46 |   try {
-  47 |     const anthropic = getClient();
-> 48 |     const response = await anthropic.messages.create({
-     |                      ^
-  49 |       model: 'claude-sonnet-4-20250514',
-  50 |       max_tokens: 6400,
-  51 |       system: FLOW_IQ_SYSTEM_PROMPT, {
-  status: 400,
-  headers: Headers {
-    date: 'Sat, 04 Apr 2026 20:21:03 GMT',
-    'content-type': 'application/json',
-    'content-length': '234',
-    connection: 'keep-alive',
-    'x-should-retry': 'false',
-    'request-id': 'req_011CZjMPtXVef6PfB4xNQTka',
-    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
-    'anthropic-organization-id': 'f062a860-e2f6-4365-9592-2486220df78d',
-    server: 'cloudflare',
-    'x-envoy-upstream-service-time': '64',
-    'server-timing': 'x-originResponse;dur=66',
-    'set-cookie': '_cfuvid=2f3FHMbaombC3NmeO_mAmtP6uh47mFLXDrcav.kqzjY-1775334063.6098342-1.0.1.1-C5_9X69Fr_DyBmRW28ncDCym_aQljcZHJk0ig6Oy9IM; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.anthropic.com',
-    'x-robots-tag': 'none',
-    'cf-cache-status': 'DYNAMIC',
-    'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
-    'cf-ray': '9e7304698e3cb269-BOM'
-  },
-  requestID: 'req_011CZjMPtXVef6PfB4xNQTka',
-  error: {
-    type: 'error',
-    error: {
-      type: 'invalid_request_error',
-      message: 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'
-    },
-    request_id: 'req_011CZjMPtXVef6PfB4xNQTka'
-  },
-  type: 'invalid_request_error'
-}
-Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CZjMQAXuxxToneDnrFfh4"}
-    at async askClaude (src\lib\claude.ts:48:22)
-    at async POST (src\app\api\generate\route.ts:482:24)
-  46 |   try {
-  47 |     const anthropic = getClient();
-> 48 |     const response = await anthropic.messages.create({
-     |                      ^
-  49 |       model: 'claude-sonnet-4-20250514',
-  50 |       max_tokens: 6400,
-  51 |       system: FLOW_IQ_SYSTEM_PROMPT, {
-  status: 400,
-  headers: Headers {
-    date: 'Sat, 04 Apr 2026 20:21:07 GMT',
-    'content-type': 'application/json',
-    'content-length': '234',
-    connection: 'keep-alive',
-    'x-should-retry': 'false',
-    'request-id': 'req_011CZjMQAXuxxToneDnrFfh4',
-    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
-    'anthropic-organization-id': 'f062a860-e2f6-4365-9592-2486220df78d',
-    server: 'cloudflare',
-    'x-envoy-upstream-service-time': '49',
-    'server-timing': 'x-originResponse;dur=51',
-    'set-cookie': '_cfuvid=O24n4R6nrdCC9f416a0OmUCoDZ5h.0ypQqFrPeUOUHg-1775334067.353394-1.0.1.1-BGZ.8Tmz3K2yd1Se0SOyOmAmBDV1.eUMepqAOolN028; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.anthropic.com',
-    'x-robots-tag': 'none',
-    'cf-cache-status': 'DYNAMIC',
-    'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
-    'cf-ray': '9e730480fd9ab269-BOM'
-  },
-  requestID: 'req_011CZjMQAXuxxToneDnrFfh4',
-  error: {
-    type: 'error',
-    error: {
-      type: 'invalid_request_error',
-      message: 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'
-    },
-    request_id: 'req_011CZjMQAXuxxToneDnrFfh4'
-  },
-  type: 'invalid_request_error'
-}
-Claude request error: Error: 400 {"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."},"request_id":"req_011CZjMSYDTBsKT3TVFvoYYg"}
-    at async askClaude (src\lib\claude.ts:48:22)
-    at async POST (src\app\api\generate\route.ts:482:24)
-  46 |   try {
-  47 |     const anthropic = getClient();
-> 48 |     const response = await anthropic.messages.create({
-     |                      ^
-  49 |       model: 'claude-sonnet-4-20250514',
-  50 |       max_tokens: 6400,
-  51 |       system: FLOW_IQ_SYSTEM_PROMPT, {
-  status: 400,
-  headers: Headers {
-    date: 'Sat, 04 Apr 2026 20:21:39 GMT',
-    'content-type': 'application/json',
-    'content-length': '234',
-    connection: 'keep-alive',
-    'x-should-retry': 'false',
-    'request-id': 'req_011CZjMSYDTBsKT3TVFvoYYg',
-    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
-    'anthropic-organization-id': 'f062a860-e2f6-4365-9592-2486220df78d',
-    server: 'cloudflare',
-    'x-envoy-upstream-service-time': '52',
-    'server-timing': 'x-originResponse;dur=53',
-    'set-cookie': '_cfuvid=honQ1cjNFejB8IxdTjI0T.EXl46CRl8XOhQPVxnQZLE-1775334099.5651085-1.0.1.1-hE4oBqcFBe55c4mioRTS31aRR7ik1CBNxVFYrzoth1c; HttpOnly; SameSite=None; Secure; Path=/; Domain=api.anthropic.com',
-    'x-robots-tag': 'none',
-    'cf-cache-status': 'DYNAMIC',
-    'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
-    'cf-ray': '9e73054a49d179fc-BOM'
-  },
-  requestID: 'req_011CZjMSYDTBsKT3TVFvoYYg',
-  error: {
-    type: 'error',
-    error: {
-      type: 'invalid_request_error',
-      message: 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.'
-    },
-    request_id: 'req_011CZjMSYDTBsKT3TVFvoYYg'
-  },
-  type: 'invalid_request_error'
-}
+[browser] Puter client generation failed: SyntaxError: Expected ',' or ']' after array element in JSON at position 13361 (line 22 column 4)
+    at JSON.parse (<anonymous>)
+    at extractJson (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0fcggs6._.js:1870:17)
+    at callPuter (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0fcggs6._.js:2035:12)
+    at async generateAI (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0fcggs6._.js:2039:29)
+    at async LearningArea.useEffect.fetchSections (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0fcggs6._.js:2140:38) (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0fcggs6._.js:2044:17)
+[browser] Puter client generation failed: SyntaxError: Expected ',' or ']' after array element in JSON at position 11659 (line 22 column 4)
+    at JSON.parse (<anonymous>)
+    at extractJson (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0fcggs6._.js:1870:17)
+    at callPuter (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0fcggs6._.js:2035:12)
+    at async generateAI (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0fcggs6._.js:2039:29)
+    at async LearningArea.useEffect.fetchSections (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0fcggs6._.js:2140:38) (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0fcggs6._.js:2044:17)
+[browser] Malformed sections data: {
+  bullet: [32m'- Green Chemistry was formally defined by Paul Anastas and John Warner in 1998; Anastas coined the term in 1991 at the U.S. EPA\n'[39m +
+    [32m'- It focuses on PREVENTING hazardous substances at the design stage, not cleaning them up afterward — a common exam distinction\n'[39m +
+    [32m'- The Bhopal Gas Tragedy (1984) involving methyl isocyanate (MIC) was a key real-world driver for developing safer chemical practices\n'[39m +
+    [32m"- It is directly relevant to India's chemical industry and aligns with national policies like NAPCC and global SDG frameworks"[39m,
+  full: [32m'Green Chemistry is the design of chemical products and processes that reduce or eliminate the use and generation of hazardous substances. It is not about cleaning up pollution after it occurs — it is about preventing pollution at the molecular level before it is ever created. This is a critical distinction that frequently appears in B.Tech examinations.\n'[39m +
+    [32m'\n'[39m +
+    [32m"Green Chemistry was formally established as a discipline by Paul Anastas and John Warner in 1998 when they published the landmark book 'Green Chemistry: Theory and Practice' and articulated the 12 Principles of Green Chemistry. Paul Anastas, often called the 'Father of Green Chemistry,' was working at the U.S. Environmental Protection Agency (EPA) at the time. The term itself was coined by Anastas in 1991 while he was developing a research program at the EPA.\n"[39m +
+    [32m'\n'[39m +
+    [32m"The field emerged as a response to growing environmental disasters caused by industrial chemistry — such as the Bhopal Gas Tragedy in India (1984), where methyl isocyanate (MIC) leaked from a Union Carbide plant, killing thousands. Such events demonstrated that traditional chemistry, while productive, was generating enormous environmental and human health costs. Green Chemistry shifts the paradigm from 'treat and dispose' to 'design and prevent.'\n"[39m +
+    [32m'\n'[39m +
+    [32m"Why does it matter for India specifically? India is one of the world's largest producers of chemicals, pharmaceuticals, and agrochemicals. Industries in states like Gujarat, Maharashtra, and Andhra Pradesh contribute heavily to industrial pollution of rivers like the Sabarmati and Godavari. Green Chemistry offers India a pathway to industrial growth without ecological destruction, aligning with national goals like the National Action Plan on Climate Change (NAPCC) and Sustainable Development Goals (SDGs).\n"[39m +
+    [32m'\n'[39m +
+    [32m'For your B.Tech exams, remember: Green Chemistry is proactive (prevention-based), not reactive (cleanup-based). Examiners often test whether students confuse environmental remediation with green chemistry — they are fundamentally different concepts.'[39m,
+  id: [32m's1'[39m,
+  story: [32m"Imagine Zaid, you are a chef. Traditional chemistry is like cooking a meal and then realizing the kitchen is full of toxic smoke — so you open windows to clean up. Green Chemistry is like redesigning the recipe so no toxic smoke is ever produced in the first place. Paul Anastas looked at the world's chemical factories causing disasters like Bhopal and said: 'What if we never made the dangerous stuff to begin with?' That one shift in thinking — from cleanup to design — is the entire soul of green chemistry."[39m,
+  title: [32m'Definition, Origin, and Why Green Chemistry Matters'[39m
+} 
+    at LearningArea.useEffect.fetchSections (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2179:37) (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2179:37)
+[browser] Malformed sections data: {
+  bullet: [32m'- Green chemistry was formalized by Paul Anastas and John Warner in 1998 through 12 guiding principles aimed at eliminating hazardous substances at the design stage\n'[39m +
+    [32m'- It differs from environmental chemistry: green chemistry prevents pollution proactively, while environmental chemistry studies pollution reactively after it occurs\n'[39m +
+    [32m'- The Bhopal Gas Tragedy (1984) involving methyl isocyanate (MIC) is a landmark Indian example that underscores why hazardous chemical reduction is critical\n'[39m +
+    [32m"- Green chemistry supports India's sustainability goals under NAPCC and aligns with B.Tech engineering ethics and sustainable development curriculum"[39m,
+  full: [32m'Green chemistry, also known as sustainable chemistry, is the design of chemical products and processes that reduce or eliminate the use and generation of hazardous substances. It is a proactive approach — meaning it aims to prevent pollution at the molecular level before it even occurs, rather than cleaning it up afterward. This is a critical distinction that Indian State Board and B.Tech examiners frequently test.\n'[39m +
+    [32m'\n'[39m +
+    [32m"Green chemistry was formally introduced by Dr. Paul Anastas and Dr. John Warner in 1998 through their landmark book 'Green Chemistry: Theory and Practice.' Paul Anastas, often called the 'Father of Green Chemistry,' was working at the U.S. Environmental Protection Agency (EPA) when he coined the term. He and Warner then formulated the now-famous 12 Principles of Green Chemistry, which serve as the foundational framework of the entire discipline.\n"[39m +
+    [32m'\n'[39m +
+    [32m'The need for green chemistry arose from the growing environmental and health crises caused by the traditional chemical industry. Historically, chemical manufacturing produced enormous quantities of toxic byproducts, consumed non-renewable resources, and released pollutants into air, water, and soil. For example, the Bhopal Gas Tragedy of 1984 in India — where methyl isocyanate (MIC) leaked from a Union Carbide plant — killed over 3,500 people immediately and affected hundreds of thousands more. Such disasters highlighted the catastrophic consequences of hazardous chemical use without adequate safeguards.\n'[39m +
+    [32m'\n'[39m +
+    [32m"Green chemistry matters for several interconnected reasons. First, it protects human health by minimizing exposure to toxic chemicals in manufacturing and consumer products. Second, it protects ecosystems by reducing chemical pollution in rivers, soil, and atmosphere. Third, it drives economic efficiency — using fewer raw materials, generating less waste, and reducing disposal costs directly improves industrial profitability. Fourth, it aligns with India's national goals under initiatives like 'Make in India' and the National Action Plan on Climate Change (NAPCC), which encourage sustainable industrial development.\n"[39m +
+    [32m'\n'[39m +
+    [32m"For Zaid's B.Tech examinations, it is important to remember that green chemistry is NOT the same as environmental chemistry. Environmental chemistry studies what happens to chemicals already in the environment; green chemistry redesigns chemistry itself to prevent those chemicals from entering the environment in the first place. This distinction is a common exam trap in Indian technical university papers."[39m,
+  id: [32m's1'[39m,
+  story: [32m"Imagine Zaid is designing a new factory in Pune that manufactures dyes for textiles. The old way would be to use benzidine-based dyes — highly toxic, carcinogenic compounds — and then build expensive effluent treatment plants to clean up the toxic wastewater afterward. Green chemistry says: stop. Redesign the dye molecule itself so it is non-toxic, uses water as a solvent, and produces no hazardous waste. Paul Anastas essentially told the entire chemical world in 1998: 'Don't mop the floor while the tap is still running — turn off the tap.' That mental shift — from cure to prevention — is the entire philosophical foundation of green chemistry."[39m,
+  title: [32m'Definition, Origin, and Why Green Chemistry Matters'[39m
+} 
+    at LearningArea.useEffect.fetchSections (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2179:37) (file://C:/Users/Zaid Mohammed/OneDrive/Documents/vibe/.next/dev/static/chunks/src_0op.iah._.js:2179:37)
