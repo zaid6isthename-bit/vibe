@@ -1,44 +1,72 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-});
-
-export const FLOW_IQ_SYSTEM_PROMPT = `
-You are FlowIQ's learning engine. You create adaptive educational content for students. Your job is to teach any topic clearly, then reformat it based on the learner's attention state.
+const FLOW_IQ_SYSTEM_PROMPT = `
+You are FlowIQ's learning engine. You create adaptive educational content for students.
 
 Rules:
 1. Always teach one concept at a time.
-2. Formats:
-   - "Full": Detailed explanation with one real-world example (max 150 words).
-   - "Bullet": 4-5 crisp, high-impact bullets.
-   - "Story": Memorable analogy or narrative (under 100 words).
-   - "Challenge": Stop content and ask a micro-challenge question.
-3. Tone: Brilliant teacher who is encouraging and engaging.
-4. When generating micro-challenges, return structured JSON: { "type": "quiz" | "blank" | "analogy", "question": string, "options": string[], "correct_answer": string, "explanation": string }.
-5. Never repeat the same opening phrase twice.
+2. Stay concrete and specific to the topic.
+3. When JSON is requested, return JSON only with no markdown or code fences.
+4. Make quiz options plausible and explanations educational.
+5. Keep the response shape exactly aligned with the user's requested schema.
 `;
 
-export async function askClaude(prompt: string, jsonMode: boolean = false) {
+function getClient() {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY is not configured.');
+  }
+
+  return new Anthropic({ apiKey });
+}
+
+function extractJsonCandidate(content: string): string {
+  const arrayStart = content.indexOf('[');
+  const objectStart = content.indexOf('{');
+  const hasArray = arrayStart !== -1;
+  const hasObject = objectStart !== -1;
+
+  if (!hasArray && !hasObject) {
+    return content.trim();
+  }
+
+  const start =
+    hasArray && hasObject
+      ? Math.min(arrayStart, objectStart)
+      : hasArray
+        ? arrayStart
+        : objectStart;
+
+  const end = Math.max(content.lastIndexOf(']'), content.lastIndexOf('}'));
+  return end > start ? content.slice(start, end + 1).trim() : content.trim();
+}
+
+export async function askClaude(prompt: string, jsonMode = false) {
+  const anthropic = getClient();
   const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20240620',
-    max_tokens: 1000,
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 6400,
     system: FLOW_IQ_SYSTEM_PROMPT,
     messages: [{ role: 'user', content: prompt }],
   });
 
-  const content = response.content[0].type === 'text' ? response.content[0].text : '';
-  
-  if (jsonMode) {
-    try {
-      // Find JSON block if present
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      return JSON.parse(jsonMatch ? jsonMatch[0] : content);
-    } catch (e) {
-      console.error("JSON parsing error", e);
-      return content;
-    }
+  const content = response.content
+    .filter((item) => item.type === 'text')
+    .map((item) => item.text)
+    .join('\n')
+    .trim();
+
+  if (!jsonMode) {
+    return content;
   }
 
-  return content;
+  try {
+    return JSON.parse(extractJsonCandidate(content));
+  } catch (error) {
+    console.error('Claude JSON parsing error:', error);
+    return content;
+  }
 }
+
+export { FLOW_IQ_SYSTEM_PROMPT };

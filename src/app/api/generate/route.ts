@@ -1,153 +1,233 @@
 import { NextResponse } from 'next/server';
 
-const GEMINI_API_KEY = process.env.GOOGLE_AI_KEY;
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+import { askClaude } from '@/lib/claude';
 
-async function askGemini(prompt: string, jsonMode = false) {
-  if (!GEMINI_API_KEY) {
-    console.warn("⚠️ No GOOGLE_AI_KEY found.");
-    return null;
-  }
+type TopicType =
+  | 'MATERIAL_OR_CHEMICAL'
+  | 'MATH_OR_THEORY'
+  | 'BIOLOGY'
+  | 'HISTORY'
+  | 'ECONOMICS_OR_FINANCE'
+  | 'COMPUTER_SCIENCE'
+  | 'PHYSICS'
+  | 'GENERAL_CONCEPT';
 
-  try {
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          response_mime_type: jsonMode ? "application/json" : "text/plain",
-          temperature: 0.65,
-          maxOutputTokens: 8192,
-        }
-      }),
-    });
+type SectionPreview = {
+  title: string;
+  full?: string;
+  bullet?: string;
+};
 
-    const data = await response.json();
-    console.log("📡 Gemini Raw (first 300):", JSON.stringify(data).slice(0, 300));
-
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {
-      console.error("❌ Gemini Error: No text in candidate.", JSON.stringify(data).slice(0, 400));
-      return null;
-    }
-
-    if (jsonMode) {
-      try {
-        const startIdx = Math.min(
-          text.indexOf('{') === -1 ? Infinity : text.indexOf('{'),
-          text.indexOf('[') === -1 ? Infinity : text.indexOf('[')
-        );
-        const endIdx = Math.max(text.lastIndexOf('}'), text.lastIndexOf(']'));
-        if (startIdx === Infinity || endIdx === -1) throw new Error("No JSON found");
-        return JSON.parse(text.substring(startIdx, endIdx + 1));
-      } catch (e) {
-        console.error("❌ JSON Parse Error:", e, "Raw:", text.slice(0, 300));
-        return null;
-      }
-    }
-
-    return text;
-  } catch (error) {
-    console.error("❌ Gemini API Error:", error);
-    return null;
-  }
-}
-
-// ─── Detect topic type for tailored prompting ────────────────────────────────
-function detectTopicType(topic: string): string {
+function detectTopicType(topic: string): TopicType {
   const t = topic.toLowerCase();
-  if (/polymer|plastic|metal|alloy|ceramic|composite|carbonate|graphene|nylon|rubber|resin|steel|copper|silicon|oxide|acid|compound|molecule|chemical|element|material|fiber|glass/.test(t))
+
+  if (/polymer|plastic|metal|alloy|ceramic|composite|carbonate|graphene|nylon|rubber|resin|steel|copper|silicon|oxide|acid|compound|molecule|chemical|element|material|fiber|glass/.test(t)) {
     return 'MATERIAL_OR_CHEMICAL';
-  if (/theorem|theory|law|principle|equation|formula|calculus|algebra|geometry|statistics|probability|proof|function|integral|derivative/.test(t))
+  }
+
+  if (/theorem|theory|law|principle|equation|formula|calculus|algebra|geometry|statistics|probability|proof|function|integral|derivative/.test(t)) {
     return 'MATH_OR_THEORY';
-  if (/cell|gene|dna|rna|protein|enzyme|organ|muscle|neuron|brain|heart|immune|virus|bacteria|evolution|photosynthesis|biology|anatomy|physiology/.test(t))
+  }
+
+  if (/cell|gene|dna|rna|protein|enzyme|organ|muscle|neuron|brain|heart|immune|virus|bacteria|evolution|photosynthesis|biology|anatomy|physiology/.test(t)) {
     return 'BIOLOGY';
-  if (/war|revolution|empire|civilization|dynasty|battle|treaty|colonialism|history|ancient|medieval|renaissance|independence|movement/.test(t))
+  }
+
+  if (/war|revolution|empire|civilization|dynasty|battle|treaty|colonialism|history|ancient|medieval|renaissance|independence|movement/.test(t)) {
     return 'HISTORY';
-  if (/interest|inflation|gdp|stock|bond|market|economics|supply|demand|trade|currency|fiscal|monetary|investment|capital|budget/.test(t))
+  }
+
+  if (/interest|inflation|gdp|stock|bond|market|economics|supply|demand|trade|currency|fiscal|monetary|investment|capital|budget/.test(t)) {
     return 'ECONOMICS_OR_FINANCE';
-  if (/code|algorithm|programming|software|hardware|network|database|cpu|memory|operating system|compiler|data structure|machine learning|ai|neural/.test(t))
+  }
+
+  if (/code|algorithm|programming|software|hardware|network|database|cpu|memory|operating system|compiler|data structure|machine learning|ai|neural/.test(t)) {
     return 'COMPUTER_SCIENCE';
-  if (/force|energy|wave|quantum|relativity|thermodynamics|electricity|magnetism|optics|mechanics|particle|atom|nucleus|physics/.test(t))
+  }
+
+  if (/force|energy|wave|quantum|relativity|thermodynamics|electricity|magnetism|optics|mechanics|particle|atom|nucleus|physics/.test(t)) {
     return 'PHYSICS';
+  }
+
   return 'GENERAL_CONCEPT';
 }
 
-function getTopicGuidance(topicType: string, topic: string): string {
+function getTopicGuidance(topicType: TopicType, topic: string): string {
   switch (topicType) {
     case 'MATERIAL_OR_CHEMICAL':
       return `Since "${topic}" is a material or chemical:
-- Section 1: Molecular/atomic structure, chemical formula, bonding type, discovery history
-- Section 2: Synthesis/manufacturing process with reaction equations and conditions
-- Section 3: Physical & mechanical properties with real numbers (tensile strength, melting point, density, Tg, etc.)
+- Section 1: Molecular or atomic structure, chemical formula, bonding type, discovery history
+- Section 2: Synthesis or manufacturing process with reaction equations and conditions
+- Section 3: Physical and mechanical properties with real numbers
 - Section 4: Chemical properties, stability, reactivity, degradation behavior
 - Section 5: Industrial applications with real product names and companies
-- Section 6: Environmental impact, recycling methods, sustainability, global market data`;
-
+- Section 6: Environmental impact, recycling methods, sustainability, and market context`;
     case 'MATH_OR_THEORY':
       return `Since "${topic}" is a mathematical concept or theory:
-- Section 1: Historical origin — who developed it, when, and what problem it solved
-- Section 2: Core definitions with precise formal notation and axioms
+- Section 1: Historical origin, the problem it solved, and who developed it
+- Section 2: Core definitions with formal notation and assumptions
 - Section 3: Key theorems or formulas with step-by-step derivation
 - Section 4: Worked numerical examples solving real problems
 - Section 5: Applications in science, engineering, economics, or computing
 - Section 6: Common mistakes, edge cases, limitations, and extensions`;
-
     case 'BIOLOGY':
       return `Since "${topic}" is a biological topic:
-- Section 1: Definition, discovery history, biological significance
-- Section 2: Molecular/cellular mechanisms with specific names (enzymes, proteins, pathways)
-- Section 3: Structural anatomy or biochemistry with real measurements and data
+- Section 1: Definition, discovery history, and biological significance
+- Section 2: Molecular or cellular mechanisms with specific names
+- Section 3: Structural anatomy or biochemistry with real measurements
 - Section 4: Physiological function and regulation mechanisms
-- Section 5: Medical/clinical relevance — diseases, treatments, research breakthroughs
+- Section 5: Medical relevance including diseases, treatments, or research
 - Section 6: Evolutionary context and current research frontiers`;
-
     case 'HISTORY':
       return `Since "${topic}" is a historical topic:
-- Section 1: Historical context — what conditions led to this event/period
-- Section 2: Key figures with specific roles, dates, and decisions they made
-- Section 3: Timeline of critical events with exact dates and locations
-- Section 4: Causes — political, economic, social, and military factors
-- Section 5: Consequences and immediate aftermath with specific outcomes
-- Section 6: Long-term historical legacy and relevance to the modern world`;
-
+- Section 1: Historical context and preconditions
+- Section 2: Key figures with specific roles, dates, and decisions
+- Section 3: Timeline of critical events with dates and locations
+- Section 4: Political, economic, social, and military causes
+- Section 5: Immediate consequences and aftermath
+- Section 6: Long-term legacy and present-day relevance`;
     case 'ECONOMICS_OR_FINANCE':
       return `Since "${topic}" is an economics or finance topic:
 - Section 1: Definition, origin, and who formalized the concept
-- Section 2: Core mechanism — how it works mathematically and in practice
+- Section 2: Core mechanism, mathematically and in practice
 - Section 3: Key formulas or models with real numerical examples
-- Section 4: Real-world data and historical case studies with specific figures
-- Section 5: Policy implications — how governments and institutions apply this
-- Section 6: Criticisms, limitations, and modern debates`;
-
+- Section 4: Historical case studies and real-world data
+- Section 5: Policy implications and institutional usage
+- Section 6: Criticisms, limitations, and current debates`;
     case 'COMPUTER_SCIENCE':
       return `Since "${topic}" is a computer science topic:
 - Section 1: Definition, origin, and why it was invented
-- Section 2: Core mechanism — how it works step by step with pseudocode or notation
-- Section 3: Time/space complexity analysis with Big-O notation
-- Section 4: Implementation details, data structures involved, edge cases
-- Section 5: Real-world applications with specific systems or companies
+- Section 2: Core mechanism step by step with pseudocode or notation
+- Section 3: Time and space complexity with Big-O notation
+- Section 4: Implementation details, data structures, and edge cases
+- Section 5: Real-world systems and company examples
 - Section 6: Variants, optimizations, and current research directions`;
-
     case 'PHYSICS':
       return `Since "${topic}" is a physics topic:
-- Section 1: Historical discovery — who, when, what experiment led to it
+- Section 1: Historical discovery, key people, and triggering experiments
 - Section 2: Core physical principles and underlying mechanisms
-- Section 3: Mathematical formulation with all variables defined and SI units
-- Section 4: Experimental evidence and how the theory was verified
-- Section 5: Engineering and technological applications with real examples
-- Section 6: Limits of the theory, quantum effects, and open questions`;
-
+- Section 3: Mathematical formulation with variables and SI units
+- Section 4: Experimental evidence and validation methods
+- Section 5: Engineering and technological applications
+- Section 6: Limits of the theory and open questions`;
     default:
       return `For the topic "${topic}":
-- Section 1: Definition, origin, who created/discovered it, and why it matters
-- Section 2: Core mechanism — how it fundamentally works at the deepest level
-- Section 3: Key components, types, or classifications with specific named examples
+- Section 1: Definition, origin, who created or discovered it, and why it matters
+- Section 2: Core mechanism and how it fundamentally works
+- Section 3: Key components, types, or classifications with specific examples
 - Section 4: Real-world applications with named case studies or institutions
-- Section 5: Quantitative aspects — data, measurements, metrics, or statistics
+- Section 5: Quantitative aspects such as data, measurements, or metrics
 - Section 6: Current challenges, limitations, and future directions`;
   }
+}
+
+function normalizeClaudeJson<T>(value: unknown): T | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return null;
+    }
+  }
+
+  return value as T;
+}
+
+function fallbackSections(topic: string, topicType: TopicType) {
+  return Array.from({ length: 6 }, (_, index) => ({
+    id: `s${index + 1}`,
+    title: `${topic} Section ${index + 1}`,
+    full: `Claude is temporarily unavailable, so this fallback section keeps the study flow running. Topic type: ${topicType}. For "${topic}", write a precise definition, list the core mechanism, identify one real example, note one misconception, and explain why the concept matters in practice. Then summarize the section in your own words and turn that summary into one question you can answer from memory.`,
+    bullet: `- Define "${topic}" precisely\n- Explain one mechanism clearly\n- Add one real example\n- Correct one misconception`,
+    story: `Treat "${topic}" like a machine with hidden gears. Each section reveals one more gear until the whole mechanism becomes predictable.`,
+  }));
+}
+
+function fallbackChallenge(topic: string, content: string) {
+  const excerpt =
+    content.split(/[.?!]/).find((line) => line.trim().length > 24)?.trim() ||
+    `The current study block is focused on ${topic}.`;
+
+  return {
+    type: 'quiz',
+    question: `Which option best matches the material you just studied about "${topic}"?`,
+    options: [
+      excerpt,
+      `${topic} was presented as something with no real-world use.`,
+      `${topic} was described without definitions or examples.`,
+      `${topic} was explained as a topic you should memorize without understanding.`,
+    ],
+    correct_answer: excerpt,
+    explanation: 'The correct choice reflects the actual study content. The others contradict the guided structure used in this app.',
+  };
+}
+
+function fallbackFlashcards(topic: string) {
+  return Array.from({ length: 8 }, (_, index) => ({
+    front: `Flashcard ${index + 1}: what is one specific fact, mechanism, or example related to "${topic}"?`,
+    back: `Answer in one or two sentences, then verify it. If you get stuck, restate the definition of "${topic}" and attach one concrete example.`,
+  }));
+}
+
+function fallbackThoughtProcess(topic: string, topicType: TopicType) {
+  return `I organized "${topic}" from foundations to application because that order helps you anchor the core ideas before handling nuance. Since this is a ${topicType.toLowerCase().replaceAll('_', ' ')} topic, the key learning challenge is connecting terminology to mechanism instead of memorizing disconnected facts.`;
+}
+
+function fallbackRecapQuiz(topic: string, sections: SectionPreview[]) {
+  return Array.from({ length: 10 }, (_, index) => {
+    const title = sections[index % Math.max(sections.length, 1)]?.title || `${topic} review`;
+    return {
+      question: `Which study action best helps you retain the ideas from "${title}"?`,
+      options: [
+        'Summarize the section, give an example, and explain one misconception',
+        'Read once and move on without checking understanding',
+        'Memorize isolated terms only',
+        'Skip examples and focus only on aesthetics',
+      ],
+      correct_answer: 'Summarize the section, give an example, and explain one misconception',
+      explanation: 'Active recall plus examples is the strongest option because it checks both understanding and retention.',
+    };
+  });
+}
+
+function fallbackDecision(topic: string) {
+  return {
+    breakdown: {
+      goal: `Make a clear, low-regret decision about ${topic}`,
+      clarity: 73,
+      options: ['Commit now', 'Run a small experiment first', 'Delay and gather more evidence'],
+    },
+    prosCons: [
+      {
+        opt: 'Run a small experiment first',
+        pros: ['Creates real evidence quickly', 'Keeps downside manageable'],
+        cons: ['Takes a bit more planning', 'May feel slower emotionally'],
+        risk: 'Running a test that is too vague to teach you anything useful',
+      },
+    ],
+    debate: [
+      { role: 'Optimist', content: `A focused first move on "${topic}" can replace uncertainty with real feedback.` },
+      { role: 'Skeptic', content: `A full commitment before testing "${topic}" could create avoidable cost or distraction.` },
+      { role: 'Judge', content: `Take the smallest meaningful step on "${topic}", define success criteria now, and review the outcome on a fixed date.` },
+    ],
+    recommendation: 'Run a bounded experiment first, then decide with evidence',
+    confidence: 76,
+  };
+}
+
+function fallbackTopics(topic: string) {
+  const seed = topic.trim() || 'Deep Study';
+  return [
+    `${seed} Fundamentals`,
+    `History of ${seed}`,
+    `${seed} in the Real World`,
+    `${seed} Common Misconceptions`,
+    `Advanced ${seed}`,
+  ];
 }
 
 export async function POST(req: Request) {
@@ -157,67 +237,32 @@ export async function POST(req: Request) {
     const topicType = detectTopicType(topic);
     const topicGuidance = getTopicGuidance(topicType, topic);
 
-    let prompt = "";
-    const jsonMode = true;
+    let prompt = '';
 
     switch (action) {
-
       case 'GENERATE_SECTIONS':
-        prompt = `You are a world-class professor and subject-matter expert in "${topic}". Create a 6-section university-level study guide that a student can use to deeply and completely understand "${topic}".
+        prompt = `You are a world-class professor and subject-matter expert in "${topic}". Create a 6-section university-level study guide that a student can use to deeply understand "${topic}".
 
 TOPIC TYPE DETECTED: ${topicType}
 REQUIRED SECTION STRUCTURE:
 ${topicGuidance}
 
-═══════════════════════════════════════════
-MANDATORY CONTENT RULES — ALL ARE NON-NEGOTIABLE
-═══════════════════════════════════════════
+Mandatory rules:
+- Return only valid JSON
+- Return exactly 6 objects
+- Every section must be topic-specific, not generic
+- Each object must contain id, title, full, bullet, and story
+- The "bullet" field must be a newline-separated list of 4 specific bullets
+- The "story" field must be 2-3 sentences explaining a specific mechanism of "${topic}"
 
-RULE 1 — SPECIFICITY: Every sentence must contain facts, names, numbers, formulas, dates, or mechanisms SPECIFIC to "${topic}". If a sentence could be copy-pasted into a guide about any other topic, it is INVALID.
-
-RULE 2 — NO FILLER: These phrases are ABSOLUTELY FORBIDDEN in your response:
-  × "this field has deep historical roots"
-  × "far-reaching practical implications"  
-  × "sits at the intersection of theory and application"
-  × "scholars have debated"
-  × "foundational pillars"
-  × "understanding begins with recognizing why it matters"
-  × "touches nearly every part of modern life"
-  × ANY sentence that could apply to more than one topic
-
-RULE 3 — DENSITY: Each "full" field must be 280+ words of real content with actual data, named examples, real people, real numbers, real formulas.
-
-RULE 4 — BULLETS: Each bullet must contain a specific measurable fact, a named example, a real number, or a real formula. No vague statements.
-
-RULE 5 — ANALOGY: The story/analogy must explain a SPECIFIC mechanism of "${topic}" — not a generic metaphor about learning or knowledge.
-
-═══════════════════════════════════════════
-QUALITY BENCHMARK
-═══════════════════════════════════════════
-
-For topic "Polycarbonates":
-
-✅ CORRECT (required quality):
-"Polycarbonates are thermoplastic polymers containing carbonate groups (-O-CO-O-) in their backbone chain, produced by condensation polymerization of bisphenol-A (BPA) with phosgene (COCl₂). First synthesized simultaneously by Hermann Schnell at Bayer AG (tradename: Makrolon) and Daniel Fox at GE Plastics (tradename: Lexan) in 1953. Glass transition temperature Tg = 147°C, density = 1.20 g/cm³, tensile strength = 55–75 MPa, impact resistance 250× greater than glass by weight..."
-
-❌ WRONG (forbidden):
-"Polycarbonates is a field with deep historical roots and far-reaching practical implications. Understanding it begins with recognizing why it matters..."
-
-Apply the CORRECT level of specificity and factual density to "${topic}".
-
-═══════════════════════════════════════════
-OUTPUT FORMAT
-═══════════════════════════════════════════
-
-Return ONLY a valid JSON array of exactly 6 objects. No markdown. No code fences. No preamble. No postamble.
-
+Return this shape only:
 [
   {
     "id": "s1",
-    "title": "Specific title using real terminology from ${topic}",
-    "full": "280+ words of dense, factual, specific content about ${topic} with real names/numbers/formulas",
-    "bullet": "- Specific fact with real number or name\n- Specific fact with real number or name\n- Specific fact with real number or name\n- Specific fact with real number or name",
-    "story": "2–3 sentence analogy explaining a specific mechanism of ${topic} — vivid and memorable"
+    "title": "string",
+    "full": "string",
+    "bullet": "- bullet 1\\n- bullet 2\\n- bullet 3\\n- bullet 4",
+    "story": "string"
   }
 ]`;
         break;
@@ -227,190 +272,159 @@ Return ONLY a valid JSON array of exactly 6 objects. No markdown. No code fences
 
 "${payload.content}"
 
-Create ONE multiple-choice question that tests genuine comprehension of the content above.
+Create one multiple-choice question that tests genuine comprehension of the material above.
 
 Requirements:
-- Question must reference a specific fact, number, name, process, or relationship from the content
-- All 4 options must be plausible — no obviously wrong answers
-- Correct answer must be clearly derivable from the content above
-- Explanation must be educational: explain why correct is correct AND why the main wrong options are wrong
+- 4 plausible options
+- Correct answer must be derivable from the content
+- Explanation must explain why the correct answer is correct
 
-Return ONLY valid JSON — no markdown, no code fences:
+Return only valid JSON:
 {
   "type": "quiz",
   "question": "string",
   "options": ["option A", "option B", "option C", "option D"],
-  "correct_answer": "exact string matching the correct option",
-  "explanation": "educational explanation (2-3 sentences)"
+  "correct_answer": "exact option text",
+  "explanation": "string"
 }`;
         break;
 
       case 'GENERATE_FLASHCARDS':
         prompt = `Create 8 active-recall flashcards for a student studying "${topic}".
 
-RULES:
-- Every front must ask about a SPECIFIC fact, formula, name, date, number, mechanism, or process from "${topic}"
-- Every back must give a complete, specific answer with real facts, numbers, or names
-- Cover: key definitions with specifics, important formulas/values, cause-effect relationships, named examples, historical context, common misconceptions
-- Vary question types: some definitional, some numerical, some process-based, some application-based
+Rules:
+- Every front must ask about a specific fact, formula, name, date, number, mechanism, or process
+- Every back must give a specific answer
+- Vary question types
 
-FORBIDDEN fronts:
-  × "What is the core definition of ${topic}?"
-  × "What are the main components of ${topic}?"
-  × "Why is ${topic} important?"
-
-REQUIRED front style (examples for polycarbonates):
-  ✓ "What is the glass transition temperature (Tg) of polycarbonate?"
-  ✓ "Who first synthesized polycarbonate and in what year?"
-  ✓ "What monomer is used as the main building block of polycarbonate?"
-
-Return ONLY a valid JSON array of 8 objects. No markdown. No code fences:
-[{ "front": "specific question", "back": "specific answer with real data" }]`;
+Return only valid JSON:
+[{ "front": "string", "back": "string" }]`;
         break;
 
       case 'GENERATE_THOUGHT_PROCESS':
         prompt = `You are the AI tutor who just taught "${topic}" (topic type: ${topicType}) to a student.
 
-Write a first-person explanation (3–4 focused sentences) of:
-1. Why you ordered the sections the way you did for "${topic}" specifically
-2. Which concepts in "${topic}" are foundational prerequisites vs. advanced applications
-3. What specific cognitive challenge students typically face with "${topic}" and how the section order addresses it
+Write a first-person explanation in 3-4 focused sentences covering:
+1. Why you ordered the sections the way you did
+2. Which concepts are foundational versus advanced
+3. What students usually find hard about "${topic}"
 
-Be SPECIFIC — name actual concepts from "${topic}". Zero generic teaching advice.
-
-Return JSON only: { "process": "string" }
-No markdown. No code fences.`;
+Return only valid JSON:
+{ "process": "string" }`;
         break;
 
-      case 'GENERATE_RECAP_QUIZ':
-        const sectionContext = payload.sections
-          ?.map((s: any, i: number) => `Section ${i + 1} — "${s.title}":\n${s.full?.slice(0, 600) || s.bullet}`)
-          ?.join('\n\n') || '';
+      case 'GENERATE_RECAP_QUIZ': {
+        const sectionContext =
+          payload.sections
+            ?.map((section: SectionPreview, index: number) => {
+              const preview = section.full?.slice(0, 600) || section.bullet || '';
+              return `Section ${index + 1} - "${section.title}":\n${preview}`;
+            })
+            .join('\n\n') || '';
 
         prompt = `Create a 10-question final assessment quiz for a student who just completed studying "${topic}".
 
 THE STUDENT STUDIED THIS CONTENT:
 ${sectionContext}
 
-REQUIREMENTS:
+Requirements:
 - Every question must test a specific fact, number, name, formula, or mechanism from the content above
-- Question distribution: 3 recall, 4 application, 3 analysis
-- All 4 options per question must be plausible (no obviously wrong choices)
-- Explanations must be educational — explain the underlying concept
-- Cover all sections (minimum 1 question per section where possible)
+- 4 plausible options per question
+- Explanations should be educational
+- Return exactly 10 questions
 
-Return ONLY a valid JSON array of exactly 10 objects. No markdown. No code fences:
+Return only valid JSON:
 [{
   "question": "string",
   "options": ["A", "B", "C", "D"],
-  "correct_answer": "exact string matching correct option",
-  "explanation": "educational explanation"
+  "correct_answer": "exact option text",
+  "explanation": "string"
 }]`;
         break;
+      }
 
       case 'DECISION_DEBATE':
         prompt = `You are a hyper-rational strategic advisor. The user needs to make this decision:
 
 "${topic}"
 
-Provide a rigorous, specific analysis tailored exactly to their situation. No generic life advice.
-
-Return this exact JSON structure — no markdown, no code fences:
+Return this exact JSON structure only:
 {
   "breakdown": {
-    "goal": "One sentence: the user's core underlying goal",
-    "clarity": 0-100,
-    "options": ["Concrete Option 1", "Concrete Option 2", "Concrete Option 3"]
+    "goal": "string",
+    "clarity": 0,
+    "options": ["string", "string", "string"]
   },
   "prosCons": [
     {
-      "opt": "Option name",
-      "pros": ["specific pro", "specific pro"],
-      "cons": ["specific con", "specific con"],
-      "risk": "The single biggest risk"
+      "opt": "string",
+      "pros": ["string", "string"],
+      "cons": ["string", "string"],
+      "risk": "string"
     }
   ],
   "debate": [
-    { "role": "Optimist", "content": "2–3 sentences: strongest case FOR. Cite specific benefits and timing." },
-    { "role": "Skeptic", "content": "2–3 sentences: strongest case AGAINST. Cite specific risks and costs." },
-    { "role": "Judge", "content": "2–3 sentences: concrete verdict with specific actionable recommendation." }
+    { "role": "Optimist", "content": "string" },
+    { "role": "Skeptic", "content": "string" },
+    { "role": "Judge", "content": "string" }
   ],
-  "recommendation": "Specific recommended path — not vague",
-  "confidence": 0-100
+  "recommendation": "string",
+  "confidence": 0
 }`;
         break;
 
       case 'SUGGEST_TOPICS':
-        prompt = `The user typed "${topic}" as a partial search query. Suggest 5 specific, intellectually rich topics a student would genuinely want to study — varied across disciplines, each one precise and interesting. Return ONLY a JSON array of 5 strings. No markdown.`;
+        prompt = `The user typed "${topic}" as a partial search query. Suggest 5 specific, intellectually rich study topics. Return only a valid JSON array of 5 strings.`;
         break;
 
       default:
         return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    console.log(`🚀 Gemini — action: ${action} | topic: "${topic}" | type: ${topicType}`);
-    const aiResponse = await askGemini(prompt, jsonMode);
-    console.log(`🤖 Result: ${aiResponse ? '✅ SUCCESS' : '❌ NULL — check API key and model name'}`);
+    const aiResponse = await askClaude(prompt, true);
 
-    if (!aiResponse) {
-      if (action === 'GENERATE_SECTIONS') {
-        return NextResponse.json([{
-          id: 's1',
-          title: 'AI Offline — Check API Key',
-          full: `The Gemini API did not return content for "${topic}". Debug steps:\n\n1. Open .env.local and confirm GOOGLE_AI_KEY is set\n2. Validate the key at aistudio.google.com/app/apikey\n3. Confirm gemini-2.0-flash is available for your account\n4. Restart your dev server after updating .env.local\n5. Check the terminal — look for the Gemini Raw log line for the exact error\n\nOnce fixed, this will show detailed expert content about "${topic}".`,
-          bullet: `- Fix: set GOOGLE_AI_KEY in .env.local\n- Model: gemini-2.0-flash\n- Free key: aistudio.google.com\n- Restart dev server after .env changes`,
-          story: `This is a placeholder — like a blank projector screen. The real expert content about "${topic}" loads the moment the API key is working.`
-        }]);
-      }
-      if (action === 'GENERATE_FLASHCARDS') {
-        return NextResponse.json([
-          { front: 'AI Status', back: 'Gemini offline. Check GOOGLE_AI_KEY in .env.local. Free key at aistudio.google.com.' },
-          { front: 'Required model', back: 'gemini-2.0-flash' }
-        ]);
-      }
-      if (action === 'GENERATE_THOUGHT_PROCESS') {
-        return NextResponse.json({ process: 'AI is offline. Set GOOGLE_AI_KEY in .env.local and restart the dev server. Get a free key at aistudio.google.com.' });
-      }
-      if (action === 'GENERATE_RECAP_QUIZ') {
-        return NextResponse.json([{
-          question: 'The AI is offline. What should you check first?',
-          options: ['Refresh the page', 'Check GOOGLE_AI_KEY in .env.local', 'Clear browser cache', 'Reinstall node_modules'],
-          correct_answer: 'Check GOOGLE_AI_KEY in .env.local',
-          explanation: 'This app uses Gemini 2.0 Flash. Add a valid GOOGLE_AI_KEY to .env.local and restart the server. Get a free key at aistudio.google.com.'
-        }]);
-      }
-      if (action === 'GENERATE_CHALLENGE') {
-        return NextResponse.json({
-          type: 'quiz',
-          question: 'AI is offline. Which environment variable needs to be set?',
-          options: ['OPENAI_API_KEY', 'GOOGLE_AI_KEY', 'ANTHROPIC_KEY', 'GEMINI_SECRET'],
-          correct_answer: 'GOOGLE_AI_KEY',
-          explanation: 'Set GOOGLE_AI_KEY in .env.local. Free key available at aistudio.google.com.'
-        });
-      }
-      if (action === 'SUGGEST_TOPICS') {
-        return NextResponse.json(['Polycarbonates', 'Quantum Entanglement', 'Compound Interest', 'CRISPR Gene Editing', 'Byzantine Empire']);
-      }
-      if (action === 'DECISION_DEBATE') {
-        return NextResponse.json({
-          breakdown: { goal: `Resolve: ${topic}`, clarity: 70, options: ['Proceed fully', 'Proceed cautiously', 'Gather more information'] },
-          prosCons: [{ opt: 'Proceed', pros: ['Creates momentum', 'Generates real data fast'], cons: ['Higher commitment', 'Less flexibility'], risk: 'Opportunity cost if assumptions are wrong' }],
-          debate: [
-            { role: 'Optimist', content: `Moving forward on "${topic}" builds momentum and tests assumptions with real-world feedback faster than analysis alone.` },
-            { role: 'Skeptic', content: `Pressure-test the core assumptions behind "${topic}" before committing — what specifically needs to be true for this to work?` },
-            { role: 'Judge', content: `Make a small, reversible first move on "${topic}" with clearly defined success criteria and a 2–4 week evaluation window.` }
-          ],
-          recommendation: 'Start with a minimum viable commitment, define evaluation criteria, reassess in 3 weeks',
-          confidence: 71
-        });
-      }
-      return NextResponse.json({ error: 'AI Offline — check GOOGLE_AI_KEY in .env.local' }, { status: 500 });
+    if (action === 'GENERATE_SECTIONS') {
+      const parsed = normalizeClaudeJson<unknown[]>(aiResponse);
+      return NextResponse.json(Array.isArray(parsed) && parsed.length > 0 ? parsed : fallbackSections(topic, topicType));
     }
 
-    return NextResponse.json(aiResponse);
+    if (action === 'GENERATE_CHALLENGE') {
+      const parsed = normalizeClaudeJson<Record<string, unknown>>(aiResponse);
+      return NextResponse.json(parsed && Array.isArray(parsed.options) ? parsed : fallbackChallenge(topic, payload.content || ''));
+    }
 
+    if (action === 'GENERATE_FLASHCARDS') {
+      const parsed = normalizeClaudeJson<unknown[]>(aiResponse);
+      return NextResponse.json(Array.isArray(parsed) && parsed.length > 0 ? parsed : fallbackFlashcards(topic));
+    }
+
+    if (action === 'GENERATE_THOUGHT_PROCESS') {
+      const parsed = normalizeClaudeJson<{ process?: string }>(aiResponse);
+      return NextResponse.json(parsed?.process ? parsed : { process: fallbackThoughtProcess(topic, topicType) });
+    }
+
+    if (action === 'GENERATE_RECAP_QUIZ') {
+      const parsed = normalizeClaudeJson<unknown[]>(aiResponse);
+      return NextResponse.json(
+        Array.isArray(parsed) && parsed.length > 0
+          ? parsed
+          : fallbackRecapQuiz(topic, (payload.sections || []) as SectionPreview[])
+      );
+    }
+
+    if (action === 'DECISION_DEBATE') {
+      const parsed = normalizeClaudeJson<Record<string, unknown>>(aiResponse);
+      return NextResponse.json(parsed && parsed.breakdown ? parsed : fallbackDecision(topic));
+    }
+
+    if (action === 'SUGGEST_TOPICS') {
+      const parsed = normalizeClaudeJson<unknown[]>(aiResponse);
+      return NextResponse.json(Array.isArray(parsed) && parsed.length > 0 ? parsed : fallbackTopics(topic));
+    }
+
+    return NextResponse.json({ error: 'Unhandled action' }, { status: 500 });
   } catch (error) {
-    console.error("❌ Internal Server Error:", error);
+    console.error('Generate route error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
