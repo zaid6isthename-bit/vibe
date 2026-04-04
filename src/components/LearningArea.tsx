@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AttentionGauge } from './AttentionGauge';
 import { useAttention, AttentionState } from '@/hooks/use-attention';
+import { generateAI } from '@/lib/ai-client';
 import { LayoutDashboard, BookOpen, ChevronRight, Zap, Target, BookMarked, HelpCircle, CheckCircle2, Brain } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -54,13 +55,7 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
   useEffect(() => {
     const fetchSections = async () => {
       try {
-        const res = await fetch('/api/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'GENERATE_SECTIONS', payload: { topic } }),
-        });
-        if (!res.ok) throw new Error('API unstable');
-        const data = await res.json();
+        const data = await generateAI('GENERATE_SECTIONS', { topic });
         if (Array.isArray(data)) {
            setSections(data);
         } else {
@@ -102,16 +97,10 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
   const triggerChallenge = async () => {
     if (showChallenge) return;
     try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          action: 'GENERATE_CHALLENGE', 
-          payload: { content: sections[currentIdx]?.full || topic } 
-        }),
+      const data = await generateAI('GENERATE_CHALLENGE', {
+        topic,
+        content: sections[currentIdx]?.full || topic,
       });
-      if (!res.ok) throw new Error('Challenge generation failed');
-      const data = await res.json();
       if (data && data.question && Array.isArray(data.options)) {
         setChallenge(data);
         setShowChallenge(true);
@@ -145,12 +134,7 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
         // Move to Thought Process stage
         setLoading(true);
         try {
-          const res = await fetch('/api/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'GENERATE_THOUGHT_PROCESS', payload: { topic } }),
-          });
-          const data = await res.json();
+          const data = await generateAI('GENERATE_THOUGHT_PROCESS', { topic });
           setThoughtProcess(data.process || "AI logic calibrated for maximum retention.");
           setCurrentStage('THOUGHT');
         } catch (e) {
@@ -163,12 +147,7 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
       // Move to Flashcards stage
       setLoading(true);
       try {
-        const res = await fetch('/api/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'GENERATE_FLASHCARDS', payload: { topic } }),
-        });
-        const data = await res.json();
+        const data = await generateAI('GENERATE_FLASHCARDS', { topic });
         setFlashcards(data || []);
         setCurrentStage('FLASHCARDS');
       } catch (e) {
@@ -185,16 +164,7 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish }) =
         // Start Final Recap Quiz
         setLoading(true);
         try {
-           const res = await fetch('/api/generate', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                 action: 'GENERATE_RECAP_QUIZ', 
-                 payload: { topic, sections } 
-              }),
-           });
-           if (!res.ok) throw new Error('Recap generation failed');
-           const data = await res.json();
+           const data = await generateAI('GENERATE_RECAP_QUIZ', { topic, sections });
            if (Array.isArray(data) && data.length > 0) {
               setRecapQuestions(data);
               setRecapIdx(0);
