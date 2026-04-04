@@ -18,6 +18,14 @@ type SectionPreview = {
   bullet?: string;
 };
 
+type GeneratedSection = {
+  id: string;
+  title: string;
+  full: string;
+  bullet: string;
+  story: string;
+};
+
 function detectTopicType(topic: string): TopicType {
   const t = topic.toLowerCase();
 
@@ -45,7 +53,7 @@ function detectTopicType(topic: string): TopicType {
     return 'COMPUTER_SCIENCE';
   }
 
-  if (/force|energy|wave|quantum|relativity|thermodynamics|electricity|magnetism|optics|mechanics|particle|atom|nucleus|physics/.test(t)) {
+  if (/gravity|gravitation|force|energy|wave|quantum|relativity|thermodynamics|electricity|magnetism|optics|mechanics|particle|atom|nucleus|physics/.test(t)) {
     return 'PHYSICS';
   }
 
@@ -137,13 +145,103 @@ function normalizeClaudeJson<T>(value: unknown): T | null {
   return value as T;
 }
 
-function fallbackSections(topic: string, topicType: TopicType) {
-  return Array.from({ length: 6 }, (_, index) => ({
+function titleCase(value: string) {
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+function fallbackSectionPlan(topic: string, topicType: TopicType) {
+  const prettyTopic = titleCase(topic);
+
+  switch (topicType) {
+    case 'PHYSICS':
+      return [
+        {
+          title: `${prettyTopic}: Core Idea`,
+          full: `${prettyTopic} describes how masses attract one another and how that attraction shapes motion, structure, and stability across the universe. In introductory physics, the concept starts with everyday effects such as falling objects and body weight, then expands to planetary orbits, tides, and spacetime curvature. A strong first understanding should connect three levels at once: observable behavior, mathematical description, and physical interpretation. For example, near Earth the gravitational acceleration is about 9.8 m/s^2, which means velocity changes by roughly 9.8 meters per second every second in free fall when air resistance is negligible. That same phenomenon scales upward to explain why the Moon remains in orbit instead of traveling in a straight line. The key idea is that gravity is not just “things falling down”; it is a rule governing how mass and energy influence motion and structure.`,
+          bullet: `- Near Earth's surface, free-fall acceleration is about 9.8 m/s^2\n- Newtonian gravity explains attraction between masses using force and distance\n- Gravity keeps planets, moons, and satellites in orbit\n- Einstein later reframed gravity as curvature of spacetime`,
+          story: `${prettyTopic} is like a landscape that bends under heavy objects. Smaller objects move along the shape of that landscape, which is why motion changes even when nothing seems to be pushing them directly.`,
+        },
+        {
+          title: `How ${prettyTopic} Works`,
+          full: `A useful mechanism-level explanation begins with Newton's law of universal gravitation: F = G(m1m2/r^2). The force grows with the product of the two masses and weakens with the square of the distance between them. That inverse-square dependence is crucial: doubling the distance reduces the force to one-quarter. In modern physics, general relativity deepens the explanation by saying mass and energy curve spacetime, and objects follow those curves. For most classroom and engineering problems, Newton's model is accurate enough and much easier to compute. When the scale becomes extreme, such as around black holes or for precision measurements with satellites, Einstein's framework becomes necessary. A good learner should know when the simpler model is sufficient and when the deeper one matters.`,
+          bullet: `- Newton's law: F = G(m1m2/r^2)\n- Doubling distance reduces force to one-quarter\n- Larger masses create stronger gravitational attraction\n- General relativity becomes important in extreme conditions`,
+          story: `Imagine stretching a sheet and placing heavy balls on it. Smaller balls roll inward not because of a mysterious tug alone, but because the surface they move on is no longer flat.`,
+        },
+        {
+          title: `${prettyTopic} in Equations`,
+          full: `The mathematical side of ${prettyTopic} gives it predictive power. Besides F = G(m1m2/r^2), students often use g = GM/r^2 to compute gravitational field strength around a planet or star. Here G is the gravitational constant, M is the mass of the larger body, and r is the distance from its center. Weight is then W = mg, which explains why the same object has different weights on Earth, the Moon, or Mars even though its mass stays constant. Orbital motion also follows from gravity: the balance between forward motion and inward gravitational pull creates stable paths. Once the symbols are understood conceptually, the equations stop looking abstract and start acting like compact summaries of real physical behavior.`,
+          bullet: `- Field strength: g = GM/r^2\n- Weight near a planet: W = mg\n- Mass stays constant, but weight changes by location\n- Orbital motion is a balance between inertia and gravitational pull`,
+          story: `Equations for ${prettyTopic} are like maps of invisible terrain. They compress motion, attraction, and distance into a form that lets you predict what happens before you even run the experiment.`,
+        },
+        {
+          title: `Evidence for ${prettyTopic}`,
+          full: `The strength of ${prettyTopic} as a scientific idea comes from repeated evidence. Falling bodies, projectile motion, pendulums, planetary orbits, and ocean tides all point to consistent gravitational behavior. The orbit of Mercury revealed tiny deviations that Newton's theory could not fully explain, and Einstein's general relativity accounted for them more accurately. Later evidence became even more dramatic: gravitational lensing showed that light bends around massive objects, and LIGO directly detected gravitational waves from merging black holes. These observations matter because they move gravity from an everyday intuition to a rigorously tested framework spanning laboratory, planetary, and cosmic scales.`,
+          bullet: `- Planetary motion is one of the oldest confirmations of gravity\n- Mercury's orbit helped test the limits of Newtonian gravity\n- Gravitational lensing shows mass bends the path of light\n- LIGO detected gravitational waves from massive collisions`,
+          story: `Each experiment is like checking the same rule in a new room. If the rule still works for apples, planets, light, and black holes, confidence in the theory grows enormously.`,
+        },
+        {
+          title: `Applications of ${prettyTopic}`,
+          full: `${prettyTopic} is not just academic; it powers real systems. Satellite design depends on orbital mechanics, GPS accuracy depends on relativistic timing corrections, and astrophysics relies on gravity to model star formation, galaxy structure, and black hole behavior. Civil engineering and geophysics also use gravitational principles in surveying and Earth modeling. Even space missions depend on gravity assists, where a spacecraft gains speed by carefully passing a planet and exchanging momentum through orbital geometry. These applications show that understanding gravity means understanding both natural structure and human technology.`,
+          bullet: `- GPS systems require relativistic corrections to stay accurate\n- Satellites rely on gravity to maintain orbit\n- Space missions use gravity assists to save fuel\n- Astrophysics uses gravity to model stars, galaxies, and black holes`,
+          story: `A spacecraft using a gravity assist is like a skater timing a pass around a moving partner. The path is carefully chosen so the motion of the larger body helps redirect and accelerate the smaller one.`,
+        },
+        {
+          title: `Limits and Big Questions in ${prettyTopic}`,
+          full: `${prettyTopic} is enormously successful, but it is not the end of the story. General relativity explains large-scale gravity beautifully, while quantum mechanics explains microscopic behavior, yet the two frameworks are still not fully unified. Questions about black hole singularities, quantum gravity, dark matter, and dark energy show that our current understanding is powerful but incomplete. For students, the important lesson is that a theory can be extremely reliable within its tested domain and still leave open deeper foundational questions. That is not weakness; it is how science advances.`,
+          bullet: `- General relativity and quantum mechanics are not yet fully unified\n- Black hole singularities mark limits of current theory\n- Dark matter and dark energy raise major open questions\n- Strong theories can still be incomplete at deeper levels`,
+          story: `${prettyTopic} is like having an excellent map of most of a continent while a few border regions remain foggy. The map is still powerful and trustworthy, but those foggy edges are where future discoveries happen.`,
+        },
+      ];
+    default:
+      return [
+        {
+          title: `${prettyTopic}: Foundations`,
+          full: `${prettyTopic} can be studied effectively by starting with a precise definition, the core mechanism behind it, and one concrete example that anchors the idea in memory. Instead of treating the topic as a label, focus on what it does, what inputs it depends on, and what outputs or consequences it produces. Good understanding begins when you can explain the topic clearly without drifting into vague language.`,
+          bullet: `- Define ${prettyTopic} in one precise sentence\n- Identify the main mechanism or process\n- Anchor the topic with one real example\n- Separate definition from application`,
+          story: `${prettyTopic} becomes easier once you stop seeing it as a word and start seeing it as a system with inputs, rules, and outcomes.`,
+        },
+        {
+          title: `How ${prettyTopic} Works`,
+          full: `The second step is mechanism. Ask what causes change inside ${prettyTopic}, what the important parts are, and how those parts interact over time. Learners often memorize labels too early; it is stronger to trace a cause-and-effect chain from start to finish.`,
+          bullet: `- Identify the main moving parts\n- Trace the cause-and-effect chain\n- Distinguish trigger from result\n- Explain the process step by step`,
+          story: `Understanding ${prettyTopic} is like watching gears mesh inside a machine. Once you see which gear turns first, the rest becomes easier to predict.`,
+        },
+        {
+          title: `${prettyTopic} in Practice`,
+          full: `A topic becomes durable when it is tied to practice. Look for a real system, institution, product, experiment, or decision where ${prettyTopic} is clearly visible. That turns abstract language into something testable and memorable.`,
+          bullet: `- Name one real-world example\n- Explain why the example fits\n- Identify a measurable outcome\n- Connect theory to use`,
+          story: `Real examples are like handles on a heavy object. They make the topic easier to lift and move mentally.`,
+        },
+        {
+          title: `Common Mistakes About ${prettyTopic}`,
+          full: `Misconceptions are powerful because they feel intuitive. A strong study pass always asks what people confuse, oversimplify, or misuse when talking about ${prettyTopic}. Correcting one false idea often improves understanding more than memorizing five extra facts.`,
+          bullet: `- Find one common misconception\n- Explain why it sounds plausible\n- Replace it with a better explanation\n- Test the correction with an example`,
+          story: `A misconception is like a map with one road drawn in the wrong place. Fixing that one line can correct the whole route.`,
+        },
+        {
+          title: `Quantitative or Structured Thinking in ${prettyTopic}`,
+          full: `Many topics become clearer when you add numbers, categories, variables, or comparisons. Even if ${prettyTopic} is not purely mathematical, structure improves recall and reasoning. Sort it into types, stages, metrics, or contrasts so your understanding becomes easier to test.`,
+          bullet: `- Add one measurement, variable, or category\n- Compare two cases clearly\n- Use structure to test understanding\n- Turn vague ideas into sharper distinctions`,
+          story: `Structure gives ${prettyTopic} a skeleton. Without it, the idea stays soft and hard to test.`,
+        },
+        {
+          title: `Mastering ${prettyTopic}`,
+          full: `The final step is consolidation. Summarize ${prettyTopic} from memory, teach it in plain language, answer one challenge question, and connect it to a neighboring idea. If you can explain what it is, how it works, where it appears, and where confusion happens, your understanding is becoming durable.`,
+          bullet: `- Summarize the topic from memory\n- Teach it in plain language\n- Answer one challenge question\n- Connect it to a related idea`,
+          story: `Mastery is the moment the topic stops feeling borrowed and starts feeling like your own tool.`,
+        },
+      ];
+  }
+}
+
+function fallbackSections(topic: string, topicType: TopicType): GeneratedSection[] {
+  return fallbackSectionPlan(topic, topicType).map((section, index) => ({
     id: `s${index + 1}`,
-    title: `${topic} Section ${index + 1}`,
-    full: `Claude is temporarily unavailable, so this fallback section keeps the study flow running. Topic type: ${topicType}. For "${topic}", write a precise definition, list the core mechanism, identify one real example, note one misconception, and explain why the concept matters in practice. Then summarize the section in your own words and turn that summary into one question you can answer from memory.`,
-    bullet: `- Define "${topic}" precisely\n- Explain one mechanism clearly\n- Add one real example\n- Correct one misconception`,
-    story: `Treat "${topic}" like a machine with hidden gears. Each section reveals one more gear until the whole mechanism becomes predictable.`,
+    ...section,
   }));
 }
 

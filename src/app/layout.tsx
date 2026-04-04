@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Newsreader, Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import PersistentBackground from '@/components/PersistentBackground';
 import ThemeEngine from '@/components/ThemeEngine';
@@ -61,6 +62,7 @@ export default function RootLayout({
         <PersistentBackground />
         {children}
       </body>
+      <Script src="https://js.puter.com/v2/" strategy="afterInteractive" />
     </html>
   );
 }
