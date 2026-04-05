@@ -9,6 +9,7 @@ import {
   Image as ImageIcon,
   Lock,
   Palette,
+  RotateCcw,
   Sparkles,
   Star,
   Type,
@@ -228,6 +229,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ streak, credits, onSpe
     isOwned,
     isEquipped,
     unlockAndEquipAsset,
+    resetAesthetics,
   } = useNeuralMarket();
 
   const [filter, setFilter] = useState<"ALL" | AssetCategory>("ALL");
@@ -289,22 +291,32 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ streak, credits, onSpe
           </p>
         </div>
 
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          className="flex items-center gap-4 rounded-3xl border border-blue/20 bg-blue/10 px-8 py-4 shadow-[0_0_30px_rgba(0,209,255,0.08)]"
-        >
-          <div className="rounded-xl bg-blue p-2 text-background">
-            <Coins size={24} fill="currentColor" />
-          </div>
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-white/40">
-              Available Credits
-            </p>
-            <h4 className="font-display text-2xl font-black text-white">
-              {credits} <span className="text-blue">nC</span>
-            </h4>
-          </div>
-        </motion.div>
+        <div className="flex items-center gap-3">
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className="flex items-center gap-4 rounded-3xl border border-blue/20 bg-blue/10 px-8 py-4 shadow-[0_0_30px_rgba(0,209,255,0.08)]"
+          >
+            <div className="rounded-xl bg-blue p-2 text-background">
+              <Coins size={24} fill="currentColor" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                Available Credits
+              </p>
+              <h4 className="font-display text-2xl font-black text-white">
+                {credits} <span className="text-blue">nC</span>
+              </h4>
+            </div>
+          </motion.div>
+
+          <button
+            onClick={() => showNotification(resetAesthetics().message)}
+            className="flex items-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-5 py-4 text-[10px] font-black uppercase tracking-widest text-white/70 hover:bg-white/10"
+          >
+            <RotateCcw size={14} />
+            Reset Aesthetics
+          </button>
+        </div>
       </div>
 
       <div className="flex w-fit items-center gap-4 rounded-2xl border border-white/5 bg-white/5 p-2">

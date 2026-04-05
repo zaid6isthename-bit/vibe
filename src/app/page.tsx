@@ -13,6 +13,7 @@ import { StudentAuthGate } from '@/components/StudentAuthGate';
 import { useNeuralMarket } from '@/context/NeuralMarketContext';
 import { useNeuroWallet } from '@/hooks/use-neuro-wallet';
 import { useStudentProfile } from '@/hooks/use-student-profile';
+import { loadQuizHistory, type QuizRecord } from '@/lib/quiz-history';
 import { PomodoroTimer } from '@/components/PomodoroTimer';
 import { BarChart3, Zap } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
@@ -36,13 +37,22 @@ export default function NeuroOS() {
     activeTheme, activeFont, activeBackdrop, activePomoBg, activePomoBtn,
     addCoins, spendCoins, updateStreak, setEquipped 
   } = useNeuroWallet();
-  const { flowCoins, addFlowCoins } = useNeuralMarket();
+  const { flowCoins, addFlowCoins, getEquippedForCategory } = useNeuralMarket();
   const { profile, ready, saveProfile, clearProfile, defaultDraft } = useStudentProfile();
+  const equippedFont = getEquippedForCategory('font');
+  const [quizHistory, setQuizHistory] = useState<QuizRecord[]>([]);
 
   // Fix Hydration Mismatch
   useEffect(() => {
     setMounted(true);
+    setQuizHistory(loadQuizHistory());
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'INSIGHTS') {
+      setQuizHistory(loadQuizHistory());
+    }
+  }, [activeTab]);
 
   const handleTabChange = (tab: NeuroModuleWithProfile) => {
     setActiveTab(tab);
@@ -70,6 +80,8 @@ export default function NeuroOS() {
   };
 
   const getFontClass = () => {
+    if (!mounted) return 'font-sans';
+    if (equippedFont) return '';
     switch (activeFont) {
       case 'newsreader-font': return 'font-newsreader';
       case 'space-grotesk-font': return 'font-space-grotesk';
@@ -213,6 +225,15 @@ export default function NeuroOS() {
                                      <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-1">Credits</p>
                                      <p className="text-2xl font-black text-amber-500">{coins} nC</p>
                                    </div>
+                                 </div>
+                                 <div className="glass p-6 border-white/5 mt-4">
+                                   <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">Quiz Records</p>
+                                   <p className="text-2xl font-black text-teal">{quizHistory.length}</p>
+                                   {quizHistory[0] && (
+                                     <p className="text-[10px] text-white/35 mt-1">
+                                       Latest: {quizHistory[0].topic} ({quizHistory[0].scorePercent}%)
+                                     </p>
+                                   )}
                                  </div>
                                  <p className="text-white/40 text-sm font-bold uppercase tracking-widest">Complete study sessions to populate your intelligence profile.</p>
                               </div>

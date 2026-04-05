@@ -13,6 +13,8 @@ type TopicType =
   | 'PHYSICS'
   | 'GENERAL_CONCEPT';
 
+type DecisionMode = 'NORMAL' | 'MENTOR' | 'DEBATE' | 'BIAS' | 'FUTURE';
+
 type SectionPreview = {
   title: string;
   full?: string;
@@ -273,6 +275,59 @@ function getSectionFacts(sections: SectionPreview[]) {
     .filter((item) => item.fact.length > 15);
 }
 
+function getContextKeywords(topic: string, sections: SectionPreview[]) {
+  const topicTokens = topic
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length >= 4);
+
+  const sectionTokens = sections
+    .flatMap((section) => `${section.title} ${section.bullet || ''} ${section.full || ''}`.split(/[^a-z0-9]+/))
+    .map((t) => t.toLowerCase())
+    .filter((t) => t.length >= 5);
+
+  return Array.from(new Set([...topicTokens, ...sectionTokens])).slice(0, 60);
+}
+
+function textMatchesContext(text: string, keywords: string[]) {
+  const normalized = text.toLowerCase();
+  return keywords.some((keyword) => normalized.includes(keyword));
+}
+
+function normalizeChallenge(
+  raw: unknown,
+  topic: string,
+  content: string,
+  sections: SectionPreview[],
+) {
+  const parsed = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : null;
+  if (!parsed) return fallbackChallenge(topic, content, sections);
+
+  const question = String(parsed.question || '').trim();
+  const options = Array.isArray(parsed.options)
+    ? parsed.options.map((opt) => String(opt || '').trim()).filter(Boolean)
+    : [];
+  const correct = String(parsed.correct_answer || '').trim();
+  const explanation = String(parsed.explanation || '').trim();
+
+  const keywords = getContextKeywords(topic, sections);
+  const contentForCheck = `${question}\n${options.join('\n')}\n${explanation}`;
+  const contextual = textMatchesContext(contentForCheck, keywords);
+  const structurallyValid = question.length > 12 && options.length === 4 && options.includes(correct) && explanation.length > 20;
+
+  if (!structurallyValid || !contextual) {
+    return fallbackChallenge(topic, content, sections);
+  }
+
+  return {
+    type: 'quiz',
+    question,
+    options,
+    correct_answer: correct,
+    explanation,
+  };
+}
+
 function fallbackChallenge(topic: string, content: string, sections: SectionPreview[]) {
   const facts = getSectionFacts(sections);
   const bestFact =
@@ -347,28 +402,178 @@ function fallbackRecapQuiz(topic: string, sections: SectionPreview[]) {
   });
 }
 
-function fallbackDecision(topic: string) {
+function normalizeDecisionMode(raw: unknown): DecisionMode {
+  const value = String(raw || '').toUpperCase();
+  if (value === 'MENTOR' || value === 'DEBATE' || value === 'BIAS' || value === 'FUTURE') {
+    return value;
+  }
+  return 'NORMAL';
+}
+
+function inferDecisionOptions(question: string) {
+  const q = question.toLowerCase();
+  if (/mba|startup/.test(q)) {
+    return [
+      'MBA now with placement pathway',
+      'Start venture now with lean execution',
+      'Work 1-2 years then choose with stronger signal',
+    ];
+  }
+  if (/branch|major|stream|engineering|cs|ece|mechanical|civil/.test(q)) {
+    return [
+      'Stay in current branch and optimize projects',
+      'Switch branch in the next valid transfer window',
+      'Keep branch and specialize through electives + internships',
+    ];
+  }
+  if (/career|path|job|higher studies|masters|phd/.test(q)) {
+    return [
+      'Job-first path for exposure and stability',
+      'Higher-studies-first path for domain depth',
+      'Hybrid path with exam prep + internships before final commit',
+    ];
+  }
+  return [
+    'Choose the fastest path and commit immediately',
+    'Take a measured path with clear milestones',
+    'Delay the decision until more evidence is collected',
+  ];
+}
+
+function fallbackDecision(question: string, mode: DecisionMode, profile?: StudentProfile | null) {
+  const options = inferDecisionOptions(question);
+  const profileLine = `${profile?.standard || 'student level'} (${profile?.board || 'general board'})`;
+  const age = Number(profile?.age || 0);
+  const studyLoadHint =
+    age > 0 && age <= 14
+      ? 'Keep learning steps shorter and more foundational.'
+      : age > 14 && age <= 18
+        ? 'Balance with exam prep and board-level expectations.'
+        : 'Prioritize depth, portfolio quality, and consistency.';
+  const debate = [
+    {
+      role: 'Optimist',
+      content: `Option "${options[0]}" can create fast momentum if your execution discipline is strong.`,
+    },
+    {
+      role: 'Skeptic',
+      content: `"${options[0]}" has higher downside if assumptions fail or your current workload is already high.`,
+    },
+    {
+      role: 'Judge',
+      content: `Given your context (${profileLine}), "${options[1]}" is the safer high-upside route for the next 8-12 weeks.`,
+    },
+  ];
+
+  const q = question.toLowerCase();
+  const wantsFullStack = /full[\s-]*stack|frontend|backend|react|node|developer/.test(q);
+  const wantsData = /data\s*science|machine learning|ml|ai|analyst/.test(q);
+
+  let answer = ``;
+
+  if (wantsFullStack) {
+    answer +=
+      `Priority subjects for full-stack development:\n` +
+      `1. Web fundamentals: HTML, CSS, JavaScript, TypeScript\n` +
+      `2. Frontend engineering: React, state management, routing, performance\n` +
+      `3. Backend engineering: Node.js, APIs, auth, server architecture\n` +
+      `4. Databases: SQL + one NoSQL database, schema design, indexing\n` +
+      `5. Deployment and DevOps: Git, CI/CD, Docker, cloud basics\n\n` +
+      `Suggested order (16 weeks):\n` +
+      `- Weeks 1-4: JS/TS + HTML/CSS + Git\n` +
+      `- Weeks 5-8: React + one production UI project\n` +
+      `- Weeks 9-12: Node + REST APIs + auth + DB\n` +
+      `- Weeks 13-16: Full-stack capstone + deploy + tests\n\n` +
+      `Projects to prove skill:\n` +
+      `- Auth-based task manager\n` +
+      `- E-commerce mini app with cart + payments sandbox\n` +
+      `- Portfolio with live deployed projects and clean README files\n\n` +
+      `${studyLoadHint}`;
+  } else if (wantsData) {
+    answer +=
+      `Best subject stack for data/AI track:\n` +
+      `1. Python + data structures\n` +
+      `2. Statistics + probability + hypothesis testing\n` +
+      `3. SQL + data wrangling + visualization\n` +
+      `4. Machine learning fundamentals and evaluation\n` +
+      `5. One specialization: NLP, CV, or forecasting\n\n` +
+      `Execution plan:\n` +
+      `- Build 3 portfolio projects with real datasets\n` +
+      `- Write short model reports with metrics and mistakes\n` +
+      `- Practice interview-style case questions weekly\n\n` +
+      `${studyLoadHint}`;
+  } else {
+    answer +=
+      `Top 3 priorities right now:\n` +
+      `1. Build core knowledge directly tied to your question\n` +
+      `2. Practice through projects or mock scenarios\n` +
+      `3. Review outcomes weekly and adjust based on evidence\n\n` +
+      `If you want, I can give you an exact week-by-week roadmap for this specific goal.\n\n` +
+      `${studyLoadHint}`;
+  }
+
+  if (mode === 'MENTOR') {
+    answer =
+      `Mentor plan:\n\n` +
+      `Best path now: ${options[1]}.\n` +
+      `Why: this gives you progress without risking your core study performance.\n\n` +
+      `Action plan:\n` +
+      `- Week 1: set target + schedule\n` +
+      `- Week 2-3: execute and collect evidence\n` +
+      `- Week 4: decide with data, not pressure\n\n` +
+      `${studyLoadHint}`;
+  }
+
+  if (mode === 'DEBATE') {
+    answer =
+      `Debate:\n\n` +
+      `Optimist: ${debate[0].content}\n` +
+      `Skeptic: ${debate[1].content}\n` +
+      `Judge: ${debate[2].content}`;
+  }
+
+  if (mode === 'BIAS') {
+    answer =
+      `Bias check:\n\n` +
+      `- Social pressure bias: choosing based on others' expectations.\n` +
+      `- Recency bias: overweighting one recent event.\n` +
+      `- Binary framing bias: assuming only two choices.\n\n` +
+      `Fix: score all options on effort, risk, cost, and long-term fit before deciding.`;
+  }
+
+  if (mode === 'FUTURE') {
+    answer =
+      `Future simulation:\n\n` +
+      `30 days: clarity improves if you follow one chosen path consistently.\n` +
+      `60 days: measurable signal appears in grades, skills, and stress level.\n` +
+      `90 days: strong evidence emerges to commit, switch, or redesign.\n\n` +
+      `Recommended move now: ${options[1]}.`;
+  }
+
   return {
+    answer,
     breakdown: {
-      goal: `Make a clear, low-regret decision about ${topic}`,
-      clarity: 73,
-      options: ['Commit now', 'Run a small experiment first', 'Delay and gather more evidence'],
+      goal: `Make a clear, low-regret decision about ${question}`,
+      clarity: 71,
+      options,
     },
     prosCons: [
       {
-        opt: 'Run a small experiment first',
-        pros: ['Creates real evidence quickly', 'Keeps downside manageable'],
-        cons: ['Takes a bit more planning', 'May feel slower emotionally'],
-        risk: 'Running a test that is too vague to teach you anything useful',
+        opt: options[0],
+        pros: ['Fast movement', 'High upside if execution goes well'],
+        cons: ['Higher risk if assumptions are wrong', 'Can disrupt academic consistency'],
+        risk: 'Overcommitting too early',
+      },
+      {
+        opt: options[1],
+        pros: ['Balanced risk-reward', 'Fits student workload better'],
+        cons: ['Requires patience', 'Needs weekly tracking discipline'],
+        risk: 'Drifting without milestones',
       },
     ],
-    debate: [
-      { role: 'Optimist', content: `A focused first move on "${topic}" can replace uncertainty with real feedback.` },
-      { role: 'Skeptic', content: `A full commitment before testing "${topic}" could create avoidable cost or distraction.` },
-      { role: 'Judge', content: `Take the smallest meaningful step on "${topic}", define success criteria now, and review the outcome on a fixed date.` },
-    ],
-    recommendation: 'Run a bounded experiment first, then decide with evidence',
-    confidence: 76,
+    debate,
+    recommendation: `Choose "${options[1]}" for the next 2-4 weeks, then decide with evidence.`,
+    confidence: 72,
   };
 }
 
@@ -388,12 +593,15 @@ function normalizeFlashcards(raw: unknown, topic: string, sections: SectionPrevi
     return fallbackFlashcards(topic, sections);
   }
 
+  const keywords = getContextKeywords(topic, sections);
   const cards = raw
     .map((item) => {
       if (!item || typeof item !== 'object') return null;
       const front = String((item as { front?: unknown }).front || '').trim();
       const back = String((item as { back?: unknown }).back || '').trim();
       if (!front || !back) return null;
+      const contextual = textMatchesContext(`${front}\n${back}`, keywords);
+      if (!contextual) return null;
       return { front, back };
     })
     .filter((item): item is { front: string; back: string } => Boolean(item));
@@ -415,10 +623,57 @@ function normalizeFlashcards(raw: unknown, topic: string, sections: SectionPrevi
   return deduped.slice(0, 10);
 }
 
+function normalizeRecapQuiz(raw: unknown, topic: string, sections: SectionPreview[]) {
+  if (!Array.isArray(raw)) return fallbackRecapQuiz(topic, sections);
+
+  const keywords = getContextKeywords(topic, sections);
+  const normalized = raw
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const q = item as {
+        question?: unknown;
+        options?: unknown;
+        correct_answer?: unknown;
+        explanation?: unknown;
+      };
+      const question = String(q.question || '').trim();
+      const options = Array.isArray(q.options) ? q.options.map((opt) => String(opt || '').trim()).filter(Boolean) : [];
+      const correct_answer = String(q.correct_answer || '').trim();
+      const explanation = String(q.explanation || '').trim();
+      if (question.length < 12 || options.length !== 4 || !options.includes(correct_answer) || explanation.length < 20) {
+        return null;
+      }
+      const contextual = textMatchesContext(`${question}\n${options.join('\n')}\n${explanation}`, keywords);
+      if (!contextual) return null;
+      return { question, options, correct_answer, explanation };
+    })
+    .filter((item): item is { question: string; options: string[]; correct_answer: string; explanation: string } => Boolean(item));
+
+  if (normalized.length < 8) {
+    return fallbackRecapQuiz(topic, sections);
+  }
+
+  return normalized.slice(0, 10);
+}
+
 export async function POST(req: Request) {
   try {
     const { action, payload } = await req.json();
-    const topic = payload?.topic || 'Unknown Topic';
+    const topic = payload?.topic || payload?.question || 'Unknown Topic';
+    const decisionMode = normalizeDecisionMode(payload?.mode);
+    const decisionQuestion = String(payload?.question || payload?.topic || '').trim() || 'Unknown decision';
+    const decisionHistory: Array<{ role: string; text: string }> = Array.isArray(payload?.history)
+      ? (payload.history as unknown[])
+          .map((item: unknown): { role: string; text: string } | null => {
+            if (!item || typeof item !== 'object') return null;
+            const role = String((item as { role?: unknown }).role || '').toLowerCase();
+            const text = String((item as { text?: unknown }).text || '').trim();
+            if (!text || (role !== 'user' && role !== 'assistant')) return null;
+            return { role, text };
+          })
+          .filter((item): item is { role: string; text: string } => item !== null)
+          .slice(-8)
+      : [];
     const sectionsFromPayload = (payload?.sections || []) as SectionPreview[];
     const studentProfile = (payload?.studentProfile || null) as StudentProfile | null;
     const topicType = detectTopicType(topic);
@@ -459,11 +714,23 @@ Return this shape only:
         break;
 
       case 'GENERATE_CHALLENGE':
+        const challengeSectionContext =
+          sectionsFromPayload
+            .slice(0, 2)
+            .map((section: SectionPreview, index: number) => {
+              const preview = section.bullet || section.full?.slice(0, 350) || '';
+              return `Section ${index + 1} - "${section.title}": ${preview}`;
+            })
+            .join('\n') || 'No section context provided.';
+
         prompt = `A student is studying "${topic}" and just read this content:
 
 ${studentContext}
 
 "${payload.content}"
+
+Section context:
+${challengeSectionContext}
 
 Create one multiple-choice question that tests genuine comprehension of the material above.
 
@@ -471,6 +738,7 @@ Requirements:
 - 4 plausible options
 - Correct answer must be derivable from the content
 - Explanation must explain why the correct answer is correct
+- The question must include at least one concrete term/fact from the provided section context
 
 Return only valid JSON:
 {
@@ -491,6 +759,7 @@ Return only valid JSON:
               return `Section ${index + 1} - "${section.title}": ${preview}`;
             })
             .join('\n') || 'No prior section context provided.';
+        const flashcardAnchors = getSectionFacts(sectionsFromPayload).slice(0, 10).map((item) => item.fact);
 
         prompt = `Create 8 active-recall flashcards for a student studying "${topic}".
 
@@ -498,6 +767,9 @@ ${studentContext}
 
 Use these section notes as your source of truth:
 ${flashcardSectionContext}
+
+Anchor facts (cover at least 6 of these across the deck):
+${flashcardAnchors.map((fact, i) => `${i + 1}. ${fact}`).join('\n') || 'No anchors available'}
 
 Rules:
 - Every front must ask about a specific fact, formula, name, date, number, mechanism, or process
@@ -540,6 +812,9 @@ ${studentContext}
 THE STUDENT STUDIED THIS CONTENT:
 ${sectionContext}
 
+Anchor facts to use directly:
+${getSectionFacts((payload.sections || []) as SectionPreview[]).slice(0, 12).map((item, i) => `${i + 1}. ${item.fact}`).join('\n') || 'No anchors available'}
+
 Requirements:
 - Every question must test a specific fact, number, name, formula, or mechanism from the content above
 - 4 plausible options per question
@@ -557,18 +832,43 @@ Return only valid JSON:
       }
 
       case 'DECISION_DEBATE':
-        prompt = `You are a hyper-rational strategic advisor. The user needs to make this decision:
+        prompt = `You are NeuroOS Decisions AI.
 
 ${studentContext}
 
-"${topic}"
+Active personality mode: ${decisionMode}
+Mode instruction: ${String(payload?.personalityInstruction || 'No extra instruction')}
+
+User's current question:
+"${decisionQuestion}"
+
+Recent chat context (oldest to newest):
+${decisionHistory.map((item) => `${item.role.toUpperCase()}: ${item.text}`).join('\n') || 'No prior context.'}
+
+Hard requirements:
+- Be context-aware to the exact question and student profile.
+- Explicitly tailor advice to the student's age, standard, board, country, and likely exam pressure.
+- Do this tailoring silently. Do not mention or repeat the user's personal profile details unless explicitly asked.
+- Do not give generic template advice.
+- Mention specific tradeoffs for this student's likely constraints (time, exam pressure, skill runway, finances).
+- Keep it concise, practical, and immediately useful.
+- Do not use vague boilerplate like "run a bounded experiment first" unless the user explicitly asked for experiment design.
+- Do not restate the question back to the user.
+- Start directly with the answer.
+- Personality behavior:
+  - NORMAL: behave like a high-quality general AI assistant (ChatGPT-like). Give a direct, specific answer to the exact question with concrete steps, examples, and useful detail.
+  - MENTOR: supportive but concrete coaching.
+  - DEBATE: Optimist vs Skeptic vs Judge.
+  - BIAS: identify biases and fixes.
+  - FUTURE: 30/60/90 outcome simulation.
 
 Return this exact JSON structure only:
 {
+  "answer": "string",
   "breakdown": {
     "goal": "string",
     "clarity": 0,
-    "options": ["string", "string", "string"]
+    "options": ["string", "string", "string", "string"]
   },
   "prosCons": [
     {
@@ -608,12 +908,8 @@ Suggest 5 specific, intellectually rich study topics. Return only a valid JSON a
     }
 
     if (action === 'GENERATE_CHALLENGE') {
-      const parsed = normalizeClaudeJson<Record<string, unknown>>(aiResponse);
-      return NextResponse.json(
-        parsed && Array.isArray(parsed.options)
-          ? parsed
-          : fallbackChallenge(topic, payload.content || '', sectionsFromPayload)
-      );
+      const parsed = normalizeClaudeJson<unknown>(aiResponse);
+      return NextResponse.json(normalizeChallenge(parsed, topic, String(payload.content || ''), sectionsFromPayload));
     }
 
     if (action === 'GENERATE_FLASHCARDS') {
@@ -634,14 +930,16 @@ Suggest 5 specific, intellectually rich study topics. Return only a valid JSON a
       const parsed = normalizeClaudeJson<unknown[]>(aiResponse);
       return NextResponse.json(
         Array.isArray(parsed) && parsed.length > 0
-          ? parsed
+          ? normalizeRecapQuiz(parsed, topic, (payload.sections || []) as SectionPreview[])
           : fallbackRecapQuiz(topic, (payload.sections || []) as SectionPreview[])
       );
     }
 
     if (action === 'DECISION_DEBATE') {
       const parsed = normalizeClaudeJson<Record<string, unknown>>(aiResponse);
-      return NextResponse.json(parsed && parsed.breakdown ? parsed : fallbackDecision(topic));
+      return NextResponse.json(
+        parsed && parsed.breakdown ? parsed : fallbackDecision(decisionQuestion, decisionMode, studentProfile)
+      );
     }
 
     if (action === 'SUGGEST_TOPICS') {

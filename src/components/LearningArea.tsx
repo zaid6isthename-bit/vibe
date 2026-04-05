@@ -106,6 +106,7 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish, stu
       const data = await generateAI('GENERATE_CHALLENGE', {
         topic,
         content: sections[currentIdx]?.full || topic,
+        sections: currentSection ? [currentSection] : [],
       }, studentProfile);
       if (data && data.question && Array.isArray(data.options)) {
         setChallenge(data);

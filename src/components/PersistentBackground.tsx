@@ -1,12 +1,29 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { clsx } from "clsx";
 
 import LightRays from "./LightRays";
+import { useNeuralMarket } from "@/context/NeuralMarketContext";
 
 export default function PersistentBackground() {
+  const { getEquippedForCategory } = useNeuralMarket();
+  const equippedBackground = getEquippedForCategory("background");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
-    <div className="fixed inset-0 z-0 overflow-hidden bg-[#05070A] pointer-events-none">
+    <div
+      className={clsx(
+        "fixed inset-0 z-0 overflow-hidden pointer-events-none",
+        mounted ? equippedBackground?.bodyClass : undefined,
+      )}
+      style={{ background: "var(--color-bg-primary, #05070A)" }}
+      suppressHydrationWarning
+    >
       <div className="absolute inset-0 z-[2] opacity-50">
         <LightRays
           raysOrigin="top-center"

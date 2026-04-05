@@ -90,13 +90,36 @@ export function useNeuralAssets() {
     // CSS vars are overwritten on next apply — no need to remove
   }, []);
 
-  // ── On mount: reapply all equipped assets ────────────────
+  const resetAesthetics = useCallback(() => {
+    const root = document.documentElement;
+    const body = document.body;
+
+    const cssVarKeys = new Set<string>();
+    ALL_ASSETS.forEach((asset) => {
+      if (asset.bodyClass) body.classList.remove(asset.bodyClass);
+      if (asset.cssVars) {
+        Object.keys(asset.cssVars).forEach((key) => cssVarKeys.add(key));
+      }
+    });
+
+    cssVarKeys.forEach((key) => root.style.removeProperty(key));
+    setEquippedIds([]);
+    return { success: true, message: "Aesthetics reset to default." };
+  }, [setEquippedIds]);
+
+  // ── Reapply all equipped assets whenever state changes ───
   useEffect(() => {
+    const body = document.body;
+
+    ALL_ASSETS.forEach((asset) => {
+      if (asset.bodyClass) body.classList.remove(asset.bodyClass);
+    });
+
     equippedIds.forEach((id) => {
       const asset = getAsset(id);
       if (asset) applyAsset(asset);
     });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [equippedIds, applyAsset]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Purchase an asset ────────────────────────────────────
   const purchaseAsset = useCallback(
@@ -223,5 +246,6 @@ export function useNeuralAssets() {
     getEquippedForCategory,
     // Coins management (call this from your existing FlowCoins system)
     addFlowCoins: (amount: number) => setFlowCoins((c) => c + amount),
+    resetAesthetics,
   };
 }
