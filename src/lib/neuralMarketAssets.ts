@@ -155,6 +155,52 @@ export const THEME_ASSETS: NeuralAsset[] = [
     },
     bodyClass: "theme-paper-white",
   },
+  {
+    id: "theme_tidal_ink",
+    name: "Tidal Ink",
+    description: "Inky ocean blues with a sharp cyan edge for crisp late-night focus.",
+    category: "theme",
+    cost: 135,
+    rarity: "epic",
+    preview: { bg: "linear-gradient(135deg,#07111f,#0d2742)", accent: "#67e8f9", textColor: "#e6fbff" },
+    cssVars: {
+      "--color-bg-primary": "#07111f",
+      "--color-bg-secondary": "#0c1829",
+      "--color-bg-card": "#11233a",
+      "--color-accent": "#67e8f9",
+      "--color-accent-hover": "#22d3ee",
+      "--color-accent-soft": "rgba(103,232,249,0.14)",
+      "--color-text-primary": "#e6fbff",
+      "--color-text-secondary": "#8ab6c7",
+      "--color-border": "rgba(103,232,249,0.18)",
+      "--color-shadow": "0 8px 36px rgba(34,211,238,0.12)",
+      "--color-sidebar": "#050d18",
+    },
+    bodyClass: "theme-tidal-ink",
+  },
+  {
+    id: "theme_rose_circuit",
+    name: "Rose Circuit",
+    description: "Warm rose neon layered over graphite for a stylish but high-contrast workspace.",
+    category: "theme",
+    cost: 145,
+    rarity: "epic",
+    preview: { bg: "linear-gradient(135deg,#161016,#2e1125)", accent: "#fb7185", textColor: "#fff1f4" },
+    cssVars: {
+      "--color-bg-primary": "#161016",
+      "--color-bg-secondary": "#1f1520",
+      "--color-bg-card": "#2b1b2e",
+      "--color-accent": "#fb7185",
+      "--color-accent-hover": "#f43f5e",
+      "--color-accent-soft": "rgba(251,113,133,0.14)",
+      "--color-text-primary": "#fff1f4",
+      "--color-text-secondary": "#c79cab",
+      "--color-border": "rgba(251,113,133,0.2)",
+      "--color-shadow": "0 8px 34px rgba(244,63,94,0.14)",
+      "--color-sidebar": "#120b13",
+    },
+    bodyClass: "theme-rose-circuit",
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -225,6 +271,28 @@ export const BACKGROUND_ASSETS: NeuralAsset[] = [
     rarity: "common",
     preview: { bg: "linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)", accent: "#e94560", textColor: "#eee" },
     bodyClass: "bg-geometric-dark",
+    cssVars: { "--bg-overlay-opacity": "1" },
+  },
+  {
+    id: "bg_data_stream",
+    name: "Data Stream",
+    description: "Soft falling data columns that give the workspace a moving analytical pulse.",
+    category: "background",
+    cost: 95,
+    rarity: "rare",
+    preview: { bg: "linear-gradient(180deg,#041017 0%,#071f2d 100%)", accent: "#38bdf8", textColor: "#dff7ff" },
+    bodyClass: "bg-data-stream",
+    cssVars: { "--bg-overlay-opacity": "1" },
+  },
+  {
+    id: "bg_sunset_haze",
+    name: "Sunset Haze",
+    description: "Layered dusk gradients with a slow drifting glow behind your study flow.",
+    category: "background",
+    cost: 105,
+    rarity: "rare",
+    preview: { bg: "linear-gradient(145deg,#1f1224 0%,#4b1d2f 45%,#71302f 100%)", accent: "#f59e0b", textColor: "#fff1d6" },
+    bodyClass: "bg-sunset-haze",
     cssVars: { "--bg-overlay-opacity": "1" },
   },
 ];
@@ -301,6 +369,34 @@ export const FONT_ASSETS: NeuralAsset[] = [
     cssVars: {
       "--font-primary": "'Oxanium', sans-serif",
       "--font-display": "'Oxanium', sans-serif",
+    },
+  },
+  {
+    id: "font_manrope",
+    name: "Manrope",
+    description: "Clean geometric sans with excellent readability for dense revision sessions.",
+    category: "font",
+    cost: 50,
+    rarity: "common",
+    preview: { bg: "#0c1119", accent: "#e2e8f0", textColor: "#f8fafc" },
+    fontUrl: "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap",
+    cssVars: {
+      "--font-primary": "'Manrope', sans-serif",
+      "--font-display": "'Manrope', sans-serif",
+    },
+  },
+  {
+    id: "font_cormorant",
+    name: "Cormorant",
+    description: "A refined serif for students who want an elegant editorial feel.",
+    category: "font",
+    cost: 75,
+    rarity: "rare",
+    preview: { bg: "#18140f", accent: "#f8d38b", textColor: "#fff7e7" },
+    fontUrl: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap",
+    cssVars: {
+      "--font-primary": "'Cormorant Garamond', serif",
+      "--font-display": "'Cormorant Garamond', serif",
     },
   },
 ];
@@ -398,6 +494,36 @@ export const POMODORO_BACKGROUND_ASSETS: NeuralAsset[] = [
       "--pom-glow": "rgba(0,245,196,0.3)",
       "--pom-text": "#b0fff0",
       "--pom-accent": "#00f5c4",
+    },
+  },
+  {
+    id: "pom_bg_arctic_dawn",
+    name: "Arctic Dawn",
+    description: "Cold blue gradients with a pale horizon glow for calm, precise focus.",
+    category: "pomodoroBackground",
+    cost: 85,
+    rarity: "rare",
+    preview: { bg: "radial-gradient(ellipse at center,#17324f 0%,#07111c 100%)", accent: "#7dd3fc", textColor: "#e0f7ff" },
+    cssVars: {
+      "--pom-bg": "radial-gradient(ellipse at center, #17324f 0%, #07111c 100%)",
+      "--pom-glow": "rgba(125,211,252,0.24)",
+      "--pom-text": "#e0f7ff",
+      "--pom-accent": "#7dd3fc",
+    },
+  },
+  {
+    id: "pom_bg_midnight_lab",
+    name: "Midnight Lab",
+    description: "Dark lab glass tones with a violet glow for long, technical sessions.",
+    category: "pomodoroBackground",
+    cost: 115,
+    rarity: "epic",
+    preview: { bg: "radial-gradient(ellipse at center,#140f28 0%,#05040d 100%)", accent: "#c084fc", textColor: "#f3e8ff" },
+    cssVars: {
+      "--pom-bg": "radial-gradient(ellipse at center, #140f28 0%, #05040d 100%)",
+      "--pom-glow": "rgba(192,132,252,0.24)",
+      "--pom-text": "#f3e8ff",
+      "--pom-accent": "#c084fc",
     },
   },
 ];
@@ -526,15 +652,92 @@ export const POMODORO_BUTTON_ASSETS: NeuralAsset[] = [
     },
     bodyClass: "pom-btn-aurora-pulse",
   },
+  {
+    id: "pom_btn_holo_flip",
+    name: "Holo Flip",
+    description: "A holographic slab button with cool neon edges and a glassy glow.",
+    category: "pomodoroButton",
+    cost: 95,
+    rarity: "epic",
+    preview: { bg: "linear-gradient(135deg,#07121f,#123152)", accent: "#7dd3fc", textColor: "#f8fdff" },
+    cssVars: {
+      "--pom-btn-bg": "linear-gradient(135deg, rgba(125,211,252,0.2), rgba(59,130,246,0.18))",
+      "--pom-btn-border": "1px solid rgba(125,211,252,0.55)",
+      "--pom-btn-radius": "1.25rem",
+      "--pom-btn-shadow": "0 12px 30px rgba(59,130,246,0.22)",
+      "--pom-btn-hover-shadow": "0 16px 42px rgba(125,211,252,0.3)",
+      "--pom-btn-text": "#f8fdff",
+      "--pom-btn-width": "auto",
+      "--pom-btn-height": "auto",
+    },
+  },
+  {
+    id: "pom_btn_sunflare",
+    name: "Sunflare",
+    description: "A bright amber control button that feels energetic without overwhelming the timer.",
+    category: "pomodoroButton",
+    cost: 80,
+    rarity: "rare",
+    preview: { bg: "linear-gradient(135deg,#3d2400,#b45309)", accent: "#fbbf24", textColor: "#fff8e1" },
+    cssVars: {
+      "--pom-btn-bg": "linear-gradient(135deg, #f59e0b, #f97316)",
+      "--pom-btn-border": "none",
+      "--pom-btn-radius": "1rem",
+      "--pom-btn-shadow": "0 12px 28px rgba(245,158,11,0.28)",
+      "--pom-btn-hover-shadow": "0 16px 40px rgba(249,115,22,0.34)",
+      "--pom-btn-text": "#fff8e1",
+      "--pom-btn-width": "auto",
+      "--pom-btn-height": "auto",
+    },
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────
 // MASTER CATALOG
 // ─────────────────────────────────────────────────────────────
+function withThemeAliases(asset: NeuralAsset): NeuralAsset {
+  if (asset.category !== "theme" || !asset.cssVars) return asset;
+
+  const accent = asset.cssVars["--color-accent"] ?? "#58a6ff";
+  const background = asset.cssVars["--color-bg-primary"] ?? "#0f1117";
+  const foreground = asset.cssVars["--color-text-primary"] ?? "#e6edf3";
+  const card = asset.cssVars["--color-bg-card"] ?? "#1c2333";
+  const border = asset.cssVars["--color-border"] ?? "rgba(88, 166, 255, 0.15)";
+  const sidebar = asset.cssVars["--color-sidebar"] ?? "#0d1117";
+
+  return {
+    ...asset,
+    cssVars: {
+      ...asset.cssVars,
+      "--background": background,
+      "--foreground": foreground,
+      "--accent-blue": accent,
+      "--accent-purple": accent,
+      "--accent-teal": accent,
+      "--accent-amber": accent,
+      "--card-bg": card,
+      "--card-border": border,
+      "--sidebar-bg": sidebar,
+    },
+  };
+}
+
+function withFontAliases(asset: NeuralAsset): NeuralAsset {
+  if (asset.category !== "font" || !asset.cssVars) return asset;
+
+  return {
+    ...asset,
+    cssVars: {
+      ...asset.cssVars,
+      "--font-active": asset.cssVars["--font-primary"] ?? "system-ui, sans-serif",
+    },
+  };
+}
+
 export const ALL_ASSETS: NeuralAsset[] = [
-  ...THEME_ASSETS,
+  ...THEME_ASSETS.map(withThemeAliases),
   ...BACKGROUND_ASSETS,
-  ...FONT_ASSETS,
+  ...FONT_ASSETS.map(withFontAliases),
   ...POMODORO_BACKGROUND_ASSETS,
   ...POMODORO_BUTTON_ASSETS,
 ];

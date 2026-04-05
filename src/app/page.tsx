@@ -8,6 +8,7 @@ import { LearningArea } from '@/components/LearningArea';
 import { DecisionsPanel } from '@/components/DecisionsPanel';
 import { ExecutionEngine } from '@/components/ExecutionEngine';
 import { Marketplace } from '@/components/Marketplace';
+import { ProfilePage } from '@/components/ProfilePage';
 import { StudentAuthGate } from '@/components/StudentAuthGate';
 import { useNeuralMarket } from '@/context/NeuralMarketContext';
 import { useNeuroWallet } from '@/hooks/use-neuro-wallet';
@@ -22,12 +23,12 @@ function cn(...inputs: ClassValue[]) {
 }
 
 type NeuroModule = 'DASHBOARD' | 'STUDY' | 'POMODORO' | 'DECISIONS' | 'EXECUTION' | 'INSIGHTS' | 'MARKET';
+type NeuroModuleWithProfile = NeuroModule | 'PROFILE';
 
 export default function NeuroOS() {
-  const [activeTab, setActiveTab] = useState<NeuroModule>('DASHBOARD');
+  const [activeTab, setActiveTab] = useState<NeuroModuleWithProfile>('DASHBOARD');
   const [studyTopic, setStudyTopic] = useState('');
   const [mounted, setMounted] = useState(false);
-  const [showProfileEditor, setShowProfileEditor] = useState(false);
 
   // Gamification Wallet
   const { 
@@ -43,7 +44,7 @@ export default function NeuroOS() {
     setMounted(true);
   }, []);
 
-  const handleTabChange = (tab: NeuroModule) => {
+  const handleTabChange = (tab: NeuroModuleWithProfile) => {
     setActiveTab(tab);
   };
 
@@ -106,10 +107,8 @@ export default function NeuroOS() {
               onTabChange={handleTabChange}
               coins={coins}
               studentProfile={profile}
-              onEditProfile={() => setShowProfileEditor(true)}
               onSignOut={() => {
                 clearProfile();
-                setShowProfileEditor(false);
                 setStudyTopic('');
                 setActiveTab('DASHBOARD');
               }}
@@ -193,7 +192,11 @@ export default function NeuroOS() {
                         {activeTab === 'EXECUTION' && <ExecutionEngine />}
                         
                         {activeTab === 'MARKET' && (
-                           <Marketplace streak={streak} />
+                           <Marketplace
+                             streak={streak}
+                             credits={coins}
+                             onSpendCredits={spendCoins}
+                           />
                         )}
 
                         {activeTab === 'INSIGHTS' && (
@@ -215,56 +218,24 @@ export default function NeuroOS() {
                               </div>
                            </div>
                         )}
+
+                        {activeTab === 'PROFILE' && (
+                          <ProfilePage
+                            profile={profile}
+                            onSave={saveProfile}
+                            onSignOut={() => {
+                              clearProfile();
+                              setStudyTopic('');
+                              setActiveTab('DASHBOARD');
+                            }}
+                          />
+                        )}
                      </motion.div>
                   </AnimatePresence>
                </div>
 
-               {/* Cinematic Footer Layer */}
-               <div className="sticky bottom-0 w-full p-10 flex justify-end pointer-events-none">
-                  <div className="flex items-center gap-6 bg-black/40 border border-white/5 p-4 rounded-2xl backdrop-blur-3xl pointer-events-auto shadow-2xl">
-                     <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-white/40 border-r border-white/10 pr-6 pl-2">
-                        <div className="w-2 h-2 rounded-full bg-blue animate-pulse shadow-blue" />
-                        Logic Core Active
-                     </div>
-                     <div className="flex items-center gap-3 text-sm font-black text-white/60 pr-2">
-                        <Zap size={14} className="text-amber-500 fill-amber-500" /> {coins} <span className="text-amber-500/50">nC</span>
-                     </div>
-                     <div className="flex items-center gap-3 text-sm font-black text-white/60 pr-2">
-                        <Zap size={14} className="text-blue fill-blue" /> {flowCoins} <span className="text-blue/60">FC</span>
-                     </div>
-                  </div>
-               </div>
             </div>
           </motion.div>
-      </AnimatePresence>
-      <AnimatePresence>
-        {showProfileEditor && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[1200] bg-black/70 backdrop-blur-xl overflow-y-auto"
-          >
-            <div className="min-h-screen flex items-center justify-center p-6">
-              <div className="relative w-full max-w-5xl">
-                <button
-                  onClick={() => setShowProfileEditor(false)}
-                  className="absolute right-6 top-6 z-10 rounded-full bg-white/8 px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-white/70 hover:bg-white/14"
-                >
-                  Close
-                </button>
-                <StudentAuthGate
-                  initialProfile={profile}
-                  mode="signin"
-                  onSubmit={(nextProfile) => {
-                    saveProfile(nextProfile);
-                    setShowProfileEditor(false);
-                  }}
-                />
-              </div>
-            </div>
-          </motion.div>
-        )}
       </AnimatePresence>
     </main>
   );

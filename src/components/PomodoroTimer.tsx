@@ -313,12 +313,12 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = ({ activePomoBg, acti
 
         {/* Timer Display */}
         <div className="flex-1 flex flex-col items-center justify-center space-y-12 relative z-10 w-full">
-           <div className="relative">
+           <div className="relative w-full flex items-center justify-center">
               <motion.div 
                  key={mode}
                  initial={{ scale: 0.8, opacity: 0 }}
                  animate={{ scale: 1, opacity: 1 }}
-                 className="text-[12rem] font-black font-display text-white tracking-tighter tabular-nums leading-none"
+                 className="text-[clamp(4rem,18vw,12rem)] font-black font-display text-white tracking-tighter tabular-nums leading-none text-center"
               >
                  {formatTime(timeLeft)}
               </motion.div>
@@ -363,8 +363,9 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = ({ activePomoBg, acti
         </div>
 
         {/* Controls */}
-        <div className="w-full flex items-center justify-between mt-auto relative z-10 border-t border-white/5 pt-12">
-           <div className="flex items-center gap-6">
+        <div className="w-full mt-auto relative z-10 border-t border-white/5 pt-8">
+           <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-8">
+           <div className="flex items-center gap-4 flex-wrap">
               <button 
                  onClick={toggleTimer} 
                  className={cn(getBtnStyle('PRIMARY'), "flowiq-pomodoro-btn")}
@@ -380,21 +381,22 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = ({ activePomoBg, acti
               </button>
            </div>
 
-           <div className="flex items-center gap-12">
-              <div className="text-right">
-                 <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-1">Session Target</p>
-                 <div className="flex items-baseline gap-2 justify-end">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 xl:w-auto w-full">
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-left sm:text-right">
+                 <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.25em] mb-1">Deep Work Counter</p>
+                 <div className="flex items-baseline gap-2 sm:justify-end">
                     <span className="text-3xl font-black text-white">{(sessionCount % 4) + 1}</span>
-                    <span className="text-xs font-black text-white/20">/ 4 CYCLES</span>
+                    <span className="text-xs font-black text-white/30">/ 4 CYCLES</span>
                  </div>
               </div>
-              <div className="text-right">
-                 <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] mb-1">Logic Yield</p>
-                 <div className="flex items-baseline gap-1 justify-end">
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-left sm:text-right">
+                 <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.25em] mb-1">Focus Minutes</p>
+                 <div className="flex items-baseline gap-1 sm:justify-end">
                     <span className="text-3xl font-black text-blue">{sessionCount * 25}</span>
-                    <span className="text-xs font-black text-white/20">MIN</span>
+                    <span className="text-xs font-black text-white/30">MIN</span>
                  </div>
               </div>
+           </div>
            </div>
         </div>
 

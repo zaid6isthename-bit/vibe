@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AttentionGauge } from './AttentionGauge';
 import { useAttention, AttentionState } from '@/hooks/use-attention';
 import { generateAI } from '@/lib/ai-client';
+import { saveQuizRecord } from '@/lib/quiz-history';
 import { StudentProfile } from '@/lib/student-profile';
 import { LayoutDashboard, BookOpen, ChevronRight, Zap, Target, BookMarked, HelpCircle, CheckCircle2, Brain } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
@@ -43,14 +44,15 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish, stu
   const [inRecapMode, setInRecapMode] = useState(false);
   const [recapQuestions, setRecapQuestions] = useState<any[]>([]);
   const [recapIdx, setRecapIdx] = useState(0);
-  const [recapFeedback, setRecapFeedback] = useState<{ selected: string; correct: string; explanation: string; isCorrect: boolean } | null>(null);
+  const [recapResults, setRecapResults] = useState<Record<number, { selected: string; correct: string; explanation: string; isCorrect: boolean }>>({});
   
   // New Stages: Thought Process & Flashcards
   const [thoughtProcess, setThoughtProcess] = useState<string>("");
   const [flashcards, setFlashcards] = useState<{front: string, back: string}[]>([]);
-  const [currentStage, setCurrentStage] = useState<'SECTIONS' | 'THOUGHT' | 'FLASHCARDS' | 'QUIZ'>('SECTIONS');
+  const [currentStage, setCurrentStage] = useState<'SECTIONS' | 'THOUGHT' | 'FLASHCARDS' | 'QUIZ' | 'QUIZ_RESULTS'>('SECTIONS');
   const [flashcardIdx, setFlashcardIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const autoAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentSection = sections[currentIdx];
   const attention = useAttention(currentSection?.id);
@@ -160,7 +162,7 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish, stu
       // Move to Flashcards stage
       setLoading(true);
       try {
-        const data = await generateAI('GENERATE_FLASHCARDS', { topic }, studentProfile);
+        const data = await generateAI('GENERATE_FLASHCARDS', { topic, sections }, studentProfile);
         setFlashcards(data || []);
         setCurrentStage('FLASHCARDS');
       } catch (e) {
@@ -181,6 +183,7 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish, stu
            if (Array.isArray(data) && data.length > 0) {
               setRecapQuestions(data);
               setRecapIdx(0);
+              setRecapResults({});
               setCurrentStage('QUIZ');
               setInRecapMode(true);
            } else {
@@ -197,30 +200,98 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish, stu
   };
 
   const handleRecapAnswer = (selectedOption: string) => {
+    if (recapResults[recapIdx]) return;
+
     const question = recapQuestions[recapIdx];
     const isCorrect = selectedOption === question?.correct_answer;
-    const nextIdx = recapIdx + 1;
     setStats(prev => ({ 
       correctChallenges: prev.correctChallenges + (isCorrect ? 1 : 0),
       totalChallenges: prev.totalChallenges + 1
     }));
 
-    setRecapFeedback({
+    const result = {
       selected: selectedOption,
       correct: question?.correct_answer || '',
       explanation: question?.explanation || 'Review the concept and try the next one.',
       isCorrect,
+    };
+
+    setRecapResults((prev) => ({ ...prev, [recapIdx]: result }));
+
+    if (isCorrect) {
+      if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+      autoAdvanceTimerRef.current = setTimeout(() => {
+        if (recapIdx < recapQuestions.length - 1) {
+          setRecapIdx((prev) => prev + 1);
+        } else {
+          setCurrentStage('QUIZ_RESULTS');
+        }
+      }, 1000);
+    }
+  };
+
+  const handlePrevSection = () => {
+    if (currentIdx <= 0) return;
+    setCurrentIdx((prev) => prev - 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePrevQuiz = () => {
+    if (recapIdx <= 0) return;
+    setRecapIdx((prev) => prev - 1);
+  };
+
+  const handleNextQuiz = () => {
+    if (!recapResults[recapIdx]) return;
+    if (recapResults[recapIdx]?.isCorrect) return;
+    if (recapIdx < recapQuestions.length - 1) {
+      setRecapIdx((prev) => prev + 1);
+      return;
+    }
+    setCurrentStage('QUIZ_RESULTS');
+  };
+
+  const finishQuizAndSave = () => {
+    const questions = recapQuestions.map((question, index) => {
+      const result = recapResults[index];
+      return {
+        question: question?.question || `Question ${index + 1}`,
+        selected: result?.selected || 'Not answered',
+        correct: result?.correct || question?.correct_answer || '',
+        isCorrect: Boolean(result?.isCorrect),
+        explanation: result?.explanation || question?.explanation || '',
+      };
     });
 
-    setTimeout(() => {
-      setRecapFeedback(null);
-      if (nextIdx < recapQuestions.length) {
-         setRecapIdx(nextIdx);
-      } else {
-         onFinish({ sections, attention, stats, recapPassed: true });
-      }
-    }, 3600);
+    const correctCount = questions.filter((item) => item.isCorrect).length;
+    const totalCount = questions.length;
+    const scorePercent = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+
+    saveQuizRecord({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      topic,
+      createdAt: new Date().toISOString(),
+      total: totalCount,
+      correct: correctCount,
+      scorePercent,
+      questions,
+    });
+
+    onFinish({
+      sections,
+      attention,
+      stats,
+      recapPassed: true,
+      quizResults: questions,
+      quizScore: scorePercent,
+    });
   };
+
+  useEffect(() => {
+    return () => {
+      if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -287,48 +358,157 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish, stu
                    </h3>
 
                    <div className="grid grid-cols-1 gap-4">
-                      {recapQuestions[recapIdx]?.options.map((opt: string, i: number) => (
+                      {recapQuestions[recapIdx]?.options.map((opt: string, i: number) => {
+                         const currentResult = recapResults[recapIdx];
+                         const isAnswered = Boolean(currentResult);
+                         const isSelected = currentResult?.selected === opt;
+                         const isCorrectOption = currentResult?.correct === opt;
+                         const showCorrectGlow = isAnswered && isCorrectOption;
+                         const showWrongGlow = isAnswered && isSelected && !currentResult?.isCorrect;
+
+                         return (
                          <button
                             key={i}
-                            disabled={Boolean(recapFeedback)}
+                            disabled={isAnswered}
                             onClick={() => handleRecapAnswer(opt)}
-                            className="w-full p-6 text-left rounded-2xl bg-white/5 border border-white/10 hover:border-teal hover:bg-teal/5 transition-all group relative overflow-hidden"
+                            className={cn(
+                              "w-full p-6 text-left rounded-2xl bg-white/5 border transition-all group relative overflow-hidden",
+                              !isAnswered && "border-white/10 hover:border-teal hover:bg-teal/5",
+                              showCorrectGlow && "border-emerald-400 shadow-[0_0_18px_rgba(52,211,153,0.65)]",
+                              showWrongGlow && "border-red-400 shadow-[0_0_18px_rgba(248,113,113,0.65)]",
+                              isAnswered && !showCorrectGlow && !showWrongGlow && "border-white/10 opacity-80",
+                            )}
                          >
                             <div className="flex items-center gap-4">
-                               <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center font-black text-xs text-white/40 group-hover:bg-teal group-hover:text-white transition-all">
+                               <div className={cn(
+                                  "w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center font-black text-xs transition-all",
+                                  !isAnswered && "text-white/40 group-hover:bg-teal group-hover:text-white",
+                                  showCorrectGlow && "bg-emerald-500/20 text-emerald-300",
+                                  showWrongGlow && "bg-red-500/20 text-red-300",
+                                  isAnswered && !showCorrectGlow && !showWrongGlow && "text-white/45",
+                                )}>
                                   {String.fromCharCode(65 + i)}
                                </div>
-                               <span className="text-lg font-bold text-white/80 group-hover:text-white transition-all">{opt}</span>
+                               <span className={cn(
+                                 "text-lg font-bold transition-all",
+                                 !isAnswered && "text-white/80 group-hover:text-white",
+                                 showCorrectGlow && "text-emerald-200",
+                                 showWrongGlow && "text-red-200",
+                                 isAnswered && !showCorrectGlow && !showWrongGlow && "text-white/70",
+                               )}>{opt}</span>
                             </div>
                          </button>
-                      ))}
+                      )})}
                    </div>
 
-                   {recapFeedback && (
+                   {recapResults[recapIdx] && (
                       <div className={cn(
                         "rounded-2xl border p-6 space-y-3",
-                        recapFeedback.isCorrect ? "border-teal/30 bg-teal/10" : "border-red/30 bg-red/10"
+                        recapResults[recapIdx].isCorrect ? "border-teal/30 bg-teal/10" : "border-red/30 bg-red/10"
                       )}>
                          <p className="text-xs font-black uppercase tracking-[0.2em] text-white/50">
-                           {recapFeedback.isCorrect ? 'Correct Answer' : 'Review This Answer'}
+                           {recapResults[recapIdx].isCorrect ? 'Correct Answer' : 'Review This Answer'}
                          </p>
-                         {!recapFeedback.isCorrect && (
+                         {!recapResults[recapIdx].isCorrect && (
                            <p className="text-sm text-white/70">
-                             You chose: <span className="font-bold text-red">{recapFeedback.selected}</span>
+                             You chose: <span className="font-bold text-red">{recapResults[recapIdx].selected}</span>
                            </p>
                          )}
                          <p className="text-sm text-white/80">
-                           Correct answer: <span className="font-bold text-teal">{recapFeedback.correct}</span>
+                           Correct answer: <span className="font-bold text-teal">{recapResults[recapIdx].correct}</span>
                          </p>
-                         <p className="text-sm text-white/65 leading-relaxed">{recapFeedback.explanation}</p>
+                         <p className="text-sm text-white/65 leading-relaxed">{recapResults[recapIdx].explanation}</p>
                       </div>
                    )}
+
+                   <div className="flex items-center justify-between pt-2">
+                      <button
+                        onClick={handlePrevQuiz}
+                        disabled={recapIdx === 0}
+                        className={cn(
+                          "px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                          recapIdx === 0
+                            ? "bg-white/5 text-white/20 cursor-not-allowed"
+                            : "bg-white/10 text-white/70 hover:bg-white/15"
+                        )}
+                      >
+                        Previous
+                      </button>
+                     <button
+                        onClick={handleNextQuiz}
+                        disabled={!recapResults[recapIdx] || recapResults[recapIdx]?.isCorrect}
+                        className={cn(
+                          "px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                          recapResults[recapIdx] && !recapResults[recapIdx]?.isCorrect
+                            ? "bg-teal text-background hover:brightness-110"
+                            : "bg-white/5 text-white/20 cursor-not-allowed"
+                        )}
+                      >
+                        {recapResults[recapIdx]?.isCorrect
+                          ? 'Auto Next...'
+                          : recapIdx < recapQuestions.length - 1
+                            ? 'Next'
+                            : 'Finish Quiz'}
+                      </button>
+                   </div>
                 </div>
 
                 <div className="absolute -bottom-20 -right-20 opacity-[0.03] rotate-12 pointer-events-none">
                    <Brain size={280} className="text-teal" />
                 </div>
              </div>
+          ) : currentStage === 'QUIZ_RESULTS' ? (
+            <div className="flex-1 flex flex-col py-6">
+              <div className="text-center space-y-3">
+                <div className="inline-flex items-center gap-2 bg-blue/10 text-blue px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest border border-blue/20">
+                  <Target size={14} /> Quiz Results
+                </div>
+                <h2 className="text-4xl font-black text-white italic">Performance <span className="text-blue">Report</span></h2>
+                <p className="text-sm text-white/55">
+                  Score: <span className="font-black text-white">
+                    {recapQuestions.length > 0 ? Math.round((Object.values(recapResults).filter((item) => item.isCorrect).length / recapQuestions.length) * 100) : 0}%
+                  </span> ({Object.values(recapResults).filter((item) => item.isCorrect).length}/{recapQuestions.length})
+                </p>
+              </div>
+
+              <div className="mt-8 flex-1 overflow-y-auto pr-2 space-y-4">
+                {recapQuestions.map((question, index) => {
+                  const result = recapResults[index];
+                  const isCorrect = Boolean(result?.isCorrect);
+                  return (
+                    <div
+                      key={index}
+                      className={cn(
+                        "rounded-2xl border p-5 space-y-3",
+                        isCorrect ? "bg-emerald-500/8 border-emerald-500/25" : "bg-red/10 border-red/25"
+                      )}
+                    >
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">
+                        Question {index + 1}
+                      </p>
+                      <p className="text-sm font-semibold text-white/90">{question?.question}</p>
+                      <p className="text-sm text-white/70">
+                        Selected: <span className={cn("font-bold", isCorrect ? "text-emerald-300" : "text-red-300")}>
+                          {result?.selected || 'Not answered'}
+                        </span>
+                      </p>
+                      <p className="text-sm text-white/75">
+                        Correct: <span className="font-bold text-teal">{result?.correct || question?.correct_answer}</span>
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-8 flex justify-end">
+                <button
+                  onClick={finishQuizAndSave}
+                  className="bg-blue text-background font-black px-8 py-4 rounded-xl uppercase tracking-widest text-xs hover:brightness-110"
+                >
+                  Save Result & Return
+                </button>
+              </div>
+            </div>
           ) : currentStage === 'THOUGHT' ? (
             <div className="flex-1 flex flex-col items-center justify-center space-y-8 text-center">
               <div className="p-4 bg-purple-500/10 rounded-full text-purple-400">
@@ -447,15 +627,29 @@ export const LearningArea: React.FC<LearningAreaProps> = ({ topic, onFinish, stu
               </div>
 
               <div className="mt-12 flex justify-end">
-                <motion.button
-                  whileHover={{ x: 5 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleNext}
-                  className="bg-white text-background font-bold px-8 py-4 rounded-xl flex items-center gap-3 transition-all hover:bg-teal hover:text-white"
-                >
-                  {currentIdx < sections.length - 1 ? 'Next Section' : 'View Thought Process'}
-                  <ChevronRight size={20} />
-                </motion.button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handlePrevSection}
+                    disabled={currentIdx === 0}
+                    className={cn(
+                      "px-6 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                      currentIdx === 0
+                        ? "bg-white/5 text-white/20 cursor-not-allowed"
+                        : "bg-white/10 text-white/75 hover:bg-white/15"
+                    )}
+                  >
+                    Previous Section
+                  </button>
+                  <motion.button
+                    whileHover={{ x: 5 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleNext}
+                    className="bg-white text-background font-bold px-8 py-4 rounded-xl flex items-center gap-3 transition-all hover:bg-teal hover:text-white"
+                  >
+                    {currentIdx < sections.length - 1 ? 'Next Section' : 'View Thought Process'}
+                    <ChevronRight size={20} />
+                  </motion.button>
+                </div>
               </div>
             </>
           )}

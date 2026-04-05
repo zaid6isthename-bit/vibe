@@ -88,3 +88,54 @@ body {
     transform: translate(-50%, 0);
   }
 }
+
+.bg-data-stream::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 54px,
+      rgba(56, 189, 248, 0.09) 54px 56px
+    ),
+    linear-gradient(180deg, rgba(56, 189, 248, 0.05), transparent 18%, rgba(125, 211, 252, 0.08) 72%, transparent);
+  animation: dataStreamShift 9s linear infinite;
+}
+
+@keyframes dataStreamShift {
+  from {
+    background-position: 0 0, 0 0;
+  }
+
+  to {
+    background-position: 56px 0, 0 160px;
+  }
+}
+
+.bg-sunset-haze::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 28%, rgba(251, 191, 36, 0.16), transparent 34%),
+    radial-gradient(circle at 72% 32%, rgba(244, 114, 182, 0.12), transparent 30%),
+    radial-gradient(circle at 50% 82%, rgba(249, 115, 22, 0.14), transparent 36%);
+  animation: sunsetHazePulse 8s ease-in-out infinite alternate;
+}
+
+@keyframes sunsetHazePulse {
+  from {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0.95;
+    transform: scale(1.04);
+  }
+}

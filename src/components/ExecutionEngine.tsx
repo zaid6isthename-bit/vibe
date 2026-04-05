@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, CheckCircle2, AlertCircle, Zap, TrendingUp, Cpu, Clock, BarChart3, Flag, Play, Trash2 
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { loadQuizHistory, QuizRecord } from '@/lib/quiz-history';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -30,6 +31,11 @@ export const ExecutionEngine: React.FC = () => {
   const [momentum, setMomentum] = useState(42);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [showInput, setShowInput] = useState(false);
+  const [quizHistory, setQuizHistory] = useState<QuizRecord[]>([]);
+
+  useEffect(() => {
+    setQuizHistory(loadQuizHistory());
+  }, []);
 
   const addTask = (title: string) => {
     if (!title.trim()) return;
@@ -272,6 +278,61 @@ export const ExecutionEngine: React.FC = () => {
                <p className="text-[10px] text-white/20 font-bold">{doneTasks} of {totalTasks} tasks</p>
              </div>
           </div>
+       </div>
+
+       <div className="glass-dark p-8 border-white/5">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-black font-display text-white uppercase tracking-widest leading-none">
+              Study Quiz Records
+            </h3>
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/30">
+              {quizHistory.length} Attempts Logged
+            </p>
+          </div>
+
+          {quizHistory.length === 0 ? (
+            <div className="h-24 rounded-2xl border border-dashed border-white/10 flex items-center justify-center">
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/20">
+                No quiz attempts saved yet
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {quizHistory.slice(0, 8).map((record) => (
+                <div key={record.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/35">
+                        {new Date(record.createdAt).toLocaleString()}
+                      </p>
+                      <h4 className="mt-1 text-sm font-bold text-white">{record.topic}</h4>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-black text-amber-500">{record.scorePercent}%</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-white/35">
+                        {record.correct}/{record.total} correct
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {record.questions.slice(0, 4).map((q, idx) => (
+                      <div
+                        key={`${record.id}-${idx}`}
+                        className={cn(
+                          "rounded-xl border px-3 py-2",
+                          q.isCorrect ? "border-teal/30 bg-teal/10" : "border-red/30 bg-red/10"
+                        )}
+                      >
+                        <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Q{idx + 1}</p>
+                        <p className="text-xs text-white/75 truncate">Selected: {q.selected}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
        </div>
     </div>
   );

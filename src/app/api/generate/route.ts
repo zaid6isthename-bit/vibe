@@ -246,30 +246,79 @@ function fallbackSections(topic: string, topicType: TopicType): GeneratedSection
   }));
 }
 
-function fallbackChallenge(topic: string, content: string) {
-  const excerpt =
+function splitBulletLines(section?: SectionPreview) {
+  return (section?.bullet || '')
+    .split('\n')
+    .map((line) => line.replace(/^[\-\*]\s*/, '').trim())
+    .filter(Boolean);
+}
+
+function getSectionFacts(sections: SectionPreview[]) {
+  return sections
+    .flatMap((section) => {
+      const bulletFacts = splitBulletLines(section).map((fact) => ({
+        title: section.title,
+        fact,
+      }));
+
+      const sentenceFacts = (section.full || '')
+        .split(/[.?!]/)
+        .map((line) => line.trim())
+        .filter((line) => line.length > 40)
+        .slice(0, 3)
+        .map((fact) => ({ title: section.title, fact }));
+
+      return [...bulletFacts, ...sentenceFacts];
+    })
+    .filter((item) => item.fact.length > 15);
+}
+
+function fallbackChallenge(topic: string, content: string, sections: SectionPreview[]) {
+  const facts = getSectionFacts(sections);
+  const bestFact =
+    facts.find((item) => new RegExp(topic, 'i').test(item.fact))?.fact ||
+    facts[0]?.fact ||
     content.split(/[.?!]/).find((line) => line.trim().length > 24)?.trim() ||
     `The current study block is focused on ${topic}.`;
 
+  const normalizedFact = bestFact.replace(/\s+/g, ' ').trim();
+  const incorrectA = `${topic} is mainly about memorizing labels without understanding mechanisms.`;
+  const incorrectB = `${topic} has no meaningful real-world applications.`;
+  const incorrectC = `${topic} is explained correctly by ignoring evidence and examples.`;
+
   return {
     type: 'quiz',
-    question: `Which option best matches the material you just studied about "${topic}"?`,
-    options: [
-      excerpt,
-      `${topic} was presented as something with no real-world use.`,
-      `${topic} was described without definitions or examples.`,
-      `${topic} was explained as a topic you should memorize without understanding.`,
-    ],
-    correct_answer: excerpt,
-    explanation: 'The correct choice reflects the actual study content. The others contradict the guided structure used in this app.',
+    question: `Which statement is most consistent with what you just studied about "${topic}"?`,
+    options: [normalizedFact, incorrectA, incorrectB, incorrectC],
+    correct_answer: normalizedFact,
+    explanation: `The correct option is taken from the studied content. The other options directly contradict the lesson's mechanism-based and evidence-based framing of ${topic}.`,
   };
 }
 
-function fallbackFlashcards(topic: string) {
-  return Array.from({ length: 8 }, (_, index) => ({
-    front: `Flashcard ${index + 1}: what is one specific fact, mechanism, or example related to "${topic}"?`,
-    back: `Answer in one or two sentences, then verify it. If you get stuck, restate the definition of "${topic}" and attach one concrete example.`,
+function fallbackFlashcards(topic: string, sections: SectionPreview[]) {
+  const facts = getSectionFacts(sections);
+
+  if (facts.length === 0) {
+    return Array.from({ length: 8 }, (_, index) => ({
+      front: `In "${topic}", what is one important mechanism or example from section ${index + 1}?`,
+      back: `State one concrete detail from your notes on ${topic}, then explain why it matters.`,
+    }));
+  }
+
+  const cardTemplates = facts.slice(0, 8).map((item, index) => ({
+    front: `[${item.title}] Q${index + 1}: Explain this key point in your own words: ${item.fact}`,
+    back: `${item.fact}. Why it matters: this point connects directly to the core idea of ${topic} in the section "${item.title}".`,
   }));
+
+  while (cardTemplates.length < 8) {
+    const source = facts[cardTemplates.length % facts.length];
+    cardTemplates.push({
+      front: `From "${source.title}", give one exam-relevant implication of: ${source.fact}`,
+      back: `Implication: ${source.fact}. Use this as a recall anchor for ${topic} and link it to a real example from the same section.`,
+    });
+  }
+
+  return cardTemplates;
 }
 
 function fallbackThoughtProcess(topic: string, topicType: TopicType) {
@@ -277,18 +326,23 @@ function fallbackThoughtProcess(topic: string, topicType: TopicType) {
 }
 
 function fallbackRecapQuiz(topic: string, sections: SectionPreview[]) {
+  const facts = getSectionFacts(sections);
+  const fallbackFacts =
+    facts.length > 0
+      ? facts
+      : [{ title: `${topic} review`, fact: `A core mechanism of ${topic} was explained with concrete examples.` }];
+
   return Array.from({ length: 10 }, (_, index) => {
-    const title = sections[index % Math.max(sections.length, 1)]?.title || `${topic} review`;
+    const source = fallbackFacts[index % fallbackFacts.length];
+    const distractor1 = `${topic} was treated as unrelated to real mechanisms or evidence.`;
+    const distractor2 = `The section "${source.title}" avoided specific facts and examples.`;
+    const distractor3 = `${source.fact.slice(0, 40)}... was presented as incorrect in the lesson.`;
+
     return {
-      question: `Which study action best helps you retain the ideas from "${title}"?`,
-      options: [
-        'Summarize the section, give an example, and explain one misconception',
-        'Read once and move on without checking understanding',
-        'Memorize isolated terms only',
-        'Skip examples and focus only on aesthetics',
-      ],
-      correct_answer: 'Summarize the section, give an example, and explain one misconception',
-      explanation: 'Active recall plus examples is the strongest option because it checks both understanding and retention.',
+      question: `Based on section "${source.title}", which statement best matches the lesson on ${topic}?`,
+      options: [source.fact, distractor1, distractor2, distractor3],
+      correct_answer: source.fact,
+      explanation: `The correct option reflects the actual section content. The distractors conflict with the concrete explanation you studied.`,
     };
   });
 }
@@ -329,10 +383,43 @@ function fallbackTopics(topic: string) {
   ];
 }
 
+function normalizeFlashcards(raw: unknown, topic: string, sections: SectionPreview[]) {
+  if (!Array.isArray(raw)) {
+    return fallbackFlashcards(topic, sections);
+  }
+
+  const cards = raw
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const front = String((item as { front?: unknown }).front || '').trim();
+      const back = String((item as { back?: unknown }).back || '').trim();
+      if (!front || !back) return null;
+      return { front, back };
+    })
+    .filter((item): item is { front: string; back: string } => Boolean(item));
+
+  const deduped: { front: string; back: string }[] = [];
+  const seen = new Set<string>();
+
+  for (const card of cards) {
+    const key = `${card.front.toLowerCase()}::${card.back.toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(card);
+  }
+
+  if (deduped.length < 6) {
+    return fallbackFlashcards(topic, sections);
+  }
+
+  return deduped.slice(0, 10);
+}
+
 export async function POST(req: Request) {
   try {
     const { action, payload } = await req.json();
     const topic = payload?.topic || 'Unknown Topic';
+    const sectionsFromPayload = (payload?.sections || []) as SectionPreview[];
     const studentProfile = (payload?.studentProfile || null) as StudentProfile | null;
     const topicType = detectTopicType(topic);
     const topicGuidance = getTopicGuidance(topicType, topic);
@@ -396,15 +483,28 @@ Return only valid JSON:
         break;
 
       case 'GENERATE_FLASHCARDS':
+        const flashcardSectionContext =
+          sectionsFromPayload
+            .slice(0, 6)
+            .map((section: SectionPreview, index: number) => {
+              const preview = section.bullet || section.full?.slice(0, 400) || '';
+              return `Section ${index + 1} - "${section.title}": ${preview}`;
+            })
+            .join('\n') || 'No prior section context provided.';
+
         prompt = `Create 8 active-recall flashcards for a student studying "${topic}".
 
 ${studentContext}
+
+Use these section notes as your source of truth:
+${flashcardSectionContext}
 
 Rules:
 - Every front must ask about a specific fact, formula, name, date, number, mechanism, or process
 - Every back must give a specific answer
 - Vary question types
 - Make every flashcard topic-specific and exam-relevant
+- Avoid generic prompts like "what is this topic?" repeated across cards
 
 Return only valid JSON:
 [{ "front": "string", "back": "string" }]`;
@@ -509,12 +609,20 @@ Suggest 5 specific, intellectually rich study topics. Return only a valid JSON a
 
     if (action === 'GENERATE_CHALLENGE') {
       const parsed = normalizeClaudeJson<Record<string, unknown>>(aiResponse);
-      return NextResponse.json(parsed && Array.isArray(parsed.options) ? parsed : fallbackChallenge(topic, payload.content || ''));
+      return NextResponse.json(
+        parsed && Array.isArray(parsed.options)
+          ? parsed
+          : fallbackChallenge(topic, payload.content || '', sectionsFromPayload)
+      );
     }
 
     if (action === 'GENERATE_FLASHCARDS') {
       const parsed = normalizeClaudeJson<unknown[]>(aiResponse);
-      return NextResponse.json(Array.isArray(parsed) && parsed.length > 0 ? parsed : fallbackFlashcards(topic));
+      return NextResponse.json(
+        Array.isArray(parsed) && parsed.length > 0
+          ? normalizeFlashcards(parsed, topic, sectionsFromPayload)
+          : fallbackFlashcards(topic, sectionsFromPayload)
+      );
     }
 
     if (action === 'GENERATE_THOUGHT_PROCESS') {

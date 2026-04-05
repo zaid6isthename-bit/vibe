@@ -117,6 +117,45 @@ export function useNeuralAssets() {
     [flowCoins, ownedIds] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
+  const unlockAsset = useCallback(
+    (id: string): { success: boolean; message: string } => {
+      const asset = getAsset(id);
+      if (!asset) return { success: false, message: "Asset not found." };
+      if (isOwned(id)) return { success: false, message: "Already owned." };
+
+      setOwnedIds((prev) => [...prev, id]);
+      return { success: true, message: `${asset.name} unlocked!` };
+    },
+    [ownedIds], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const unlockAndEquipAsset = useCallback(
+    (id: string): { success: boolean; message: string } => {
+      const asset = getAsset(id);
+      if (!asset) return { success: false, message: "Asset not found." };
+
+      if (!isOwned(id)) {
+        setOwnedIds((prev) => [...prev, id]);
+      }
+
+      const sameCategory = equippedIds
+        .map(getAsset)
+        .filter((a) => a?.category === asset.category);
+
+      sameCategory.forEach((prev) => {
+        if (prev) {
+          removeAsset(prev);
+        }
+      });
+
+      applyAsset(asset);
+      setEquippedIds((prev) => [...prev.filter((itemId) => getAsset(itemId)?.category !== asset.category), id]);
+
+      return { success: true, message: `${asset.name} unlocked and equipped!` };
+    },
+    [equippedIds, ownedIds, applyAsset, removeAsset], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
   // ── Equip an asset ────────────────────────────────────────
   const equipAsset = useCallback(
     (id: string): { success: boolean; message: string } => {
@@ -174,6 +213,8 @@ export function useNeuralAssets() {
     allAssets: ALL_ASSETS,
     // Actions
     purchaseAsset,
+    unlockAsset,
+    unlockAndEquipAsset,
     equipAsset,
     unequipAsset,
     // Helpers

@@ -1,300 +1,538 @@
 "use client";
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { generateAI } from '@/lib/ai-client';
-import { StudentProfile } from '@/lib/student-profile';
-import { 
-  Scale, MessageSquare, ShieldCheck, Zap, AlertCircle, TrendingUp, TrendingDown, Target, Brain, Info, CheckCircle2, XCircle, ArrowRight, RefreshCw, Sparkles 
-} from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import React, { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  AlertTriangle,
+  Brain,
+  MessageSquare,
+  RefreshCw,
+  Scale,
+  Send,
+  Sparkles,
+  Swords,
+  Target,
+  WandSparkles,
+} from "lucide-react";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+import { generateAI } from "@/lib/ai-client";
+import { StudentProfile } from "@/lib/student-profile";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+type Mode = "STANDARD" | "DEBATE" | "BIAS" | "FUTURE";
+
+interface StructuredDecision {
+  problemUnderstanding: string;
+  hiddenConcerns: string[];
+  contextAwareness: string[];
+  options: string[];
+  prosCons: Array<{ option: string; pros: string[]; cons: string[] }>;
+  recommendation: string;
+  confidence: number;
+  confidenceLabel: "Low" | "Medium" | "High";
+  biasChecks: string[];
+  futureSimulation: Array<{ day: string; outlook: string }>;
+  suggestedActions: string[];
+  clarityScore: number;
+  riskLevel: "Low" | "Medium" | "High";
+  debate: Array<{ role: string; content: string }>;
+}
+
+interface ChatEntry {
+  id: string;
+  prompt: string;
+  mode: Mode;
+  createdAt: number;
+  clarification?: string[];
+  response?: StructuredDecision;
 }
 
 interface DecisionsPanelProps {
   studentProfile: StudentProfile;
 }
 
+const LOADING_STEPS = [
+  "Understanding your situation...",
+  "Analyzing possible paths...",
+  "Structuring your options...",
+];
+
+const MODE_META: Record<Mode, { label: string; icon: React.ReactNode }> = {
+  STANDARD: { label: "Mentor", icon: <Brain size={14} /> },
+  DEBATE: { label: "Debate Mode", icon: <Swords size={14} /> },
+  BIAS: { label: "Bias Check", icon: <Target size={14} /> },
+  FUTURE: { label: "Future Simulation", icon: <WandSparkles size={14} /> },
+};
+
+function normalizeConfidence(value: number) {
+  if (value >= 75) return "High" as const;
+  if (value >= 45) return "Medium" as const;
+  return "Low" as const;
+}
+
+function detectRisk(confidence: number, prosCons: Array<{ cons: string[] }>) {
+  const averageCons =
+    prosCons.length > 0
+      ? prosCons.reduce((sum, item) => sum + item.cons.length, 0) / prosCons.length
+      : 1;
+  if (confidence >= 75 && averageCons <= 1.2) return "Low" as const;
+  if (confidence < 45 || averageCons >= 2.4) return "High" as const;
+  return "Medium" as const;
+}
+
+function isVaguePrompt(input: string) {
+  const trimmed = input.trim().toLowerCase();
+  if (trimmed.length < 18) return true;
+  const tokens = trimmed.split(/\s+/).filter(Boolean);
+  if (tokens.length < 4) return true;
+  const hasDecisionSignal = /(should|choose|vs|or|switch|career|path|decision|move|start)/.test(trimmed);
+  return !hasDecisionSignal;
+}
+
+function getClarifyingQuestions(input: string) {
+  return [
+    `When you ask "${input}", what outcome matters most to you in the next 6 months?`,
+    "What is your biggest constraint right now: time, money, skills, or family expectations?",
+  ];
+}
+
+function buildModePrompt(mode: Mode, prompt: string) {
+  switch (mode) {
+    case "DEBATE":
+      return `${prompt}\n\nAlso emphasize a direct Optimist vs Skeptic debate before final recommendation.`;
+    case "BIAS":
+      return `${prompt}\n\nAlso detect possible decision biases and mention how to correct them.`;
+    case "FUTURE":
+      return `${prompt}\n\nAlso include 30/60/90 day outcome simulation guidance.`;
+    default:
+      return prompt;
+  }
+}
+
+function buildStructuredDecision(raw: any, prompt: string, mode: Mode, profile: StudentProfile): StructuredDecision {
+  const options: string[] = Array.isArray(raw?.breakdown?.options) ? raw.breakdown.options.slice(0, 5) : [];
+  const prosConsSource = Array.isArray(raw?.prosCons) ? raw.prosCons : [];
+  const prosCons = prosConsSource.slice(0, 5).map((item: any, index: number) => ({
+    option: item?.opt || options[index] || `Option ${index + 1}`,
+    pros: Array.isArray(item?.pros) ? item.pros.slice(0, 3) : ["Potential upside exists if executed well."],
+    cons: Array.isArray(item?.cons) ? item.cons.slice(0, 3) : ["Has uncertainty and execution risk."],
+  }));
+  const confidence = Number(raw?.confidence || 62);
+  const confidenceLabel = normalizeConfidence(confidence);
+  const riskLevel = detectRisk(confidence, prosCons);
+  const debate = Array.isArray(raw?.debate) ? raw.debate.slice(0, 3) : [];
+  const hiddenConcerns = [
+    "Fear of regret after committing",
+    "Pressure to choose quickly without enough evidence",
+    "Balancing long-term growth with short-term academic stability",
+  ];
+  const contextAwareness = [
+    `Skills context: you are a ${profile.standard} student, so options should fit your current skill runway.`,
+    `Time context: decisions should preserve study consistency and revision momentum.`,
+    "Finance context: assume moderate budget constraints unless explicitly stated otherwise.",
+  ];
+  const futureSimulation = [
+    { day: "30 days", outlook: `You gain initial clarity if you run a small test instead of overcommitting on "${prompt}".` },
+    { day: "60 days", outlook: "Progress compounds when you track outcomes weekly and adjust based on evidence." },
+    { day: "90 days", outlook: "You see clearer signal on fit, effort cost, and long-term sustainability." },
+  ];
+  const biasChecks = [
+    "Binary thinking: framing only two paths when hybrid paths might exist.",
+    "Social pressure bias: over-weighting what others expect over your own constraints.",
+    "Recency bias: over-valuing the latest event instead of longer-term data.",
+  ];
+
+  return {
+    problemUnderstanding:
+      raw?.breakdown?.goal ||
+      `You want to make a high-stakes decision about "${prompt}" without hurting your academic progress.`,
+    hiddenConcerns,
+    contextAwareness,
+    options: options.length > 0 ? options : ["Option A", "Option B", "Option C"],
+    prosCons: prosCons.length > 0 ? prosCons : [{
+      option: "Option A",
+      pros: ["Simple to execute."],
+      cons: ["May not maximize long-term upside."],
+    }],
+    recommendation:
+      raw?.recommendation ||
+      "Start with a small reversible experiment, then commit based on evidence.",
+    confidence,
+    confidenceLabel,
+    biasChecks: mode === "BIAS" ? biasChecks : biasChecks.slice(0, 1),
+    futureSimulation: mode === "FUTURE" ? futureSimulation : futureSimulation.slice(0, 1),
+    suggestedActions: [
+      "Define one success metric before choosing.",
+      "Set a review checkpoint date.",
+      "Choose the option that protects study consistency this month.",
+    ],
+    clarityScore: Number(raw?.breakdown?.clarity || 70),
+    riskLevel,
+    debate,
+  };
+}
+
 export const DecisionsPanel: React.FC<DecisionsPanelProps> = ({ studentProfile }) => {
-  const [decisionTitle, setDecisionTitle] = useState('');
+  const [mode, setMode] = useState<Mode>("STANDARD");
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [outcome, setOutcome] = useState<any>(null);
-  const [activeStep, setActiveStep] = useState<'IDEATE' | 'DEBATE' | 'RESULT'>('IDEATE');
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [entries, setEntries] = useState<ChatEntry[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
-  const handleSuggest = async () => {
-    if (!decisionTitle) return;
+  useEffect(() => {
+    if (!loading) return;
+    const timer = window.setInterval(() => {
+      setLoadingStep((prev) => (prev + 1) % LOADING_STEPS.length);
+    }, 900);
+    return () => window.clearInterval(timer);
+  }, [loading]);
+
+  const activeEntry = useMemo(
+    () => entries.find((entry) => entry.id === activeId) || entries[entries.length - 1] || null,
+    [activeId, entries],
+  );
+
+  const submitPrompt = async (forcedPrompt?: string) => {
+    const prompt = (forcedPrompt ?? input).trim();
+    if (!prompt) return;
+
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    if (isVaguePrompt(prompt)) {
+      const clarification = getClarifyingQuestions(prompt);
+      const newEntry: ChatEntry = {
+        id,
+        prompt,
+        mode,
+        createdAt: Date.now(),
+        clarification,
+      };
+      setEntries((prev) => [...prev, newEntry]);
+      setActiveId(id);
+      setInput("");
+      return;
+    }
+
+    const pendingEntry: ChatEntry = {
+      id,
+      prompt,
+      mode,
+      createdAt: Date.now(),
+    };
+    setEntries((prev) => [...prev, pendingEntry]);
+    setActiveId(id);
+    setInput("");
     setLoading(true);
+    setLoadingStep(0);
+
     try {
-      const data = await generateAI('DECISION_DEBATE', { topic: decisionTitle }, studentProfile);
-
-      if (!data || data.error || !data.breakdown) {
-        throw new Error(data.error || 'Invalid API Response');
-      }
-
-      setOutcome(data);
-      setActiveStep('DEBATE');
-    } catch (e) {
-      console.error(e);
-      const examContext = `${studentProfile.board} standard ${studentProfile.standard}`;
-      setOutcome({
-        breakdown: {
-          goal: `Resolve "${decisionTitle}" in a way that protects progress in ${examContext}`,
-          clarity: 78,
-          options: [
-            'Take the academically safer option',
-            'Run a small low-risk trial first',
-            'Delay until the next study checkpoint',
-          ],
-        },
-        prosCons: [
-          {
-            opt: 'Run a small low-risk trial first',
-            pros: ['Lets you gather real evidence', 'Keeps disruption to study schedule low'],
-            cons: ['May feel slower emotionally', 'Needs a clear success metric'],
-            risk: 'You may drift without defining a review date',
-          },
-        ],
-        debate: [
-          { role: 'Optimist', content: `If this choice improves energy, focus, or time management, it could strengthen your ${examContext} performance.` },
-          { role: 'Skeptic', content: `If it steals revision hours or adds stress close to assessments, it may hurt results more than it helps.` },
-          { role: 'Judge', content: 'Choose the option that preserves revision consistency, sleep, and weekly momentum unless you have strong evidence that the riskier path will pay off soon.' },
-        ],
-        recommendation: 'Test the idea in a small reversible way before making a full commitment',
-        confidence: 74,
-      });
-      setActiveStep('DEBATE');
+      const raw = await generateAI("DECISION_DEBATE", { topic: buildModePrompt(mode, prompt) }, studentProfile);
+      const structured = buildStructuredDecision(raw, prompt, mode, studentProfile);
+      setEntries((prev) =>
+        prev.map((entry) => (entry.id === id ? { ...entry, response: structured } : entry)),
+      );
+    } catch (error) {
+      const fallback = buildStructuredDecision(null, prompt, mode, studentProfile);
+      setEntries((prev) =>
+        prev.map((entry) => (entry.id === id ? { ...entry, response: fallback } : entry)),
+      );
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
+  const followUps = [
+    "Refine this decision",
+    "Compare 2 options",
+    "Simulate future outcome",
+  ];
+
+  const applyFollowUp = (type: string) => {
+    if (!activeEntry?.prompt) return;
+    if (type === "Refine this decision") {
+      submitPrompt(`Refine this decision with tighter criteria: ${activeEntry.prompt}`);
+      return;
+    }
+    if (type === "Compare 2 options") {
+      const first = activeEntry.response?.options?.[0] || "Option A";
+      const second = activeEntry.response?.options?.[1] || "Option B";
+      submitPrompt(`Compare these two options for me: ${first} vs ${second}. My original decision: ${activeEntry.prompt}`);
+      return;
+    }
+    submitPrompt(`Simulate likely 30/60/90-day outcomes for this decision: ${activeEntry.prompt}`);
+  };
+
   return (
-    <div className="w-full flex-1 flex flex-col p-12 overflow-y-auto space-y-12">
-       <div className="flex items-center gap-6 mb-4">
-          <div className="p-4 bg-purple-500/10 rounded-2xl border border-purple-500/20 text-purple-400">
-             <Scale size={32} />
+    <div className="w-full flex-1 overflow-y-auto p-8">
+      <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 gap-6 xl:grid-cols-[320px_minmax(0,1fr)_320px]">
+        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-2xl">
+          <div className="mb-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-white/35">
+            <MessageSquare size={14} /> Chat History
           </div>
-          <div className="space-y-1">
-             <h2 className="text-4xl font-black font-display text-white italic tracking-tight">
-                Decision <span className="text-purple-400">Copilot</span>
-             </h2>
-             <p className="text-sm text-white/40 font-medium tracking-widest uppercase">Logic Engine & AI Debate Mode</p>
-             <p className="text-xs text-white/30 font-bold uppercase tracking-[0.2em]">{studentProfile.board} • Standard {studentProfile.standard} • {studentProfile.country}</p>
-          </div>
-       </div>
-
-       {activeStep === 'IDEATE' && (
-          <motion.div 
-             initial={{ opacity: 0, y: 20 }}
-             animate={{ opacity: 1, y: 0 }}
-             className="max-w-3xl w-full mx-auto space-y-12 py-20"
-          >
-             <div className="text-center space-y-4 mb-16">
-                <Sparkles size={40} className="text-purple-400 mx-auto mb-6 opacity-40" />
-                <h3 className="text-5xl font-black text-white font-display leading-[1.1]">
-                   What choice is <br/> affecting your <span className="text-purple-400">momentum</span>?
-                </h3>
-                <p className="text-xl text-white/40 font-medium max-w-lg mx-auto">
-                   NeuroOS will analyze bias, run a tri-agent debate, and calculate outcome probability.
+          <div className="space-y-3">
+            {entries.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-white/10 p-4 text-xs text-white/40">
+                Your mentor conversations will appear here.
+              </div>
+            )}
+            {entries.map((entry) => (
+              <button
+                key={entry.id}
+                onClick={() => setActiveId(entry.id)}
+                className={cn(
+                  "w-full rounded-2xl border p-3 text-left transition-all",
+                  activeEntry?.id === entry.id
+                    ? "border-blue/35 bg-blue/10"
+                    : "border-white/10 bg-white/[0.02] hover:border-white/20",
+                )}
+              >
+                <p className="line-clamp-2 text-sm font-semibold text-white/80">{entry.prompt}</p>
+                <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-white/30">
+                  {MODE_META[entry.mode].label}
                 </p>
-             </div>
-
-             <div className="relative group">
-                <div className="absolute inset-0 bg-purple-500/20 blur-3xl opacity-20 transition-opacity group-focus-within:opacity-40" />
-                <div className="relative flex items-center bg-white/5 border border-white/10 rounded-3xl p-6 transition-all duration-300 focus-within:border-purple-500/50">
-                   <div className="flex-1">
-                      <p className="text-[10px] font-black uppercase text-purple-400 tracking-widest mb-2 px-2">Decision Context</p>
-                      <input 
-                         type="text"
-                         value={decisionTitle}
-                         onChange={(e) => setDecisionTitle(e.target.value)}
-                         placeholder="E.g. Should I accept the Lead Engineer role at the AI startup?"
-                         className="w-full bg-transparent border-none outline-none text-2xl font-bold text-white placeholder:text-white/10 px-2"
-                         onKeyDown={(e) => e.key === 'Enter' && handleSuggest()}
-                      />
-                   </div>
-                   <button 
-                      onClick={handleSuggest}
-                      className={cn(
-                        "bg-purple-500 text-white font-black px-10 py-6 rounded-2xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(157,80,255,0.3)]",
-                        !decisionTitle && "opacity-50 pointer-events-none grayscale"
-                      )}
-                   >
-                      {loading ? (
-                         <RefreshCw className="animate-spin" size={24} />
-                      ) : (
-                         <>Execute Analysis <ArrowRight size={24} /></>
-                      )}
-                   </button>
-                </div>
-             </div>
-
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                   "Is it time to switch careers?",
-                   "Should I sell my long-term assets?",
-                   "Is this project worth 6 months of deep work?",
-                   "Relocating to another city for better focus?"
-                ].map(q => (
-                   <button 
-                      key={q}
-                      onClick={() => setDecisionTitle(q)}
-                      className="p-6 text-left rounded-2xl bg-white/[0.02] border border-white/5 text-white/40 hover:bg-purple-500/10 hover:border-purple-500/20 hover:text-white transition-all text-sm font-bold"
-                   >
-                      {q}
-                   </button>
-                ))}
-             </div>
-          </motion.div>
-       )}
-
-       {activeStep === 'DEBATE' && outcome && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full max-w-7xl mx-auto w-full">
-             <div className="lg:col-span-8 space-y-8">
-                <div className="glass p-10 border-white/5 space-y-10 relative overflow-hidden">
-                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent animate-pulse" />
-                   
-                   <div className="flex items-center justify-between px-2">
-                       <h3 className="text-2xl font-black font-display text-white flex items-center gap-4">
-                         <Target size={24} className="text-purple-400" /> Goal Clarification
-                       </h3>
-                       <div className="flex items-center gap-2 bg-purple-500/10 px-4 py-2 rounded-full border border-purple-500/20">
-                          <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest font-display">Clarity Score</span>
-                          <span className="text-sm font-black text-white">{outcome.breakdown.clarity}%</span>
-                       </div>
-                   </div>
-
-                   <p className="text-3xl font-bold text-white/80 leading-[1.3] px-2 italic">
-                      "{outcome.breakdown.goal}"
-                   </p>
-
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {outcome.breakdown.options.map((opt: string, i: number) => (
-                         <div key={i} className="p-6 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4 hover:border-purple-500/40 transition-colors cursor-default">
-                            <div className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-black text-xs">0{i+1}</div>
-                            <span className="font-bold text-white/80">{opt}</span>
-                         </div>
-                      ))}
-                   </div>
-                </div>
-
-                <div className="space-y-6">
-                   <div className="flex items-center gap-4 px-2">
-                      <h3 className="text-lg font-black font-display text-white uppercase tracking-widest flex items-center gap-3">
-                         <MessageSquare size={20} className="text-purple-400" /> AI Debate Mode (3 Rounds)
-                      </h3>
-                      <div className="flex-1 h-px bg-white/5" />
-                   </div>
-
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                      <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/5 hidden md:block" />
-                      
-                      {outcome.debate.slice(0, 2).map((msg: any, i: number) => (
-                         <motion.div 
-                            key={i}
-                            initial={{ opacity: 0, x: i === 0 ? -20 : 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className={cn(
-                               "glass-dark p-8 border-white/5 relative",
-                               i === 0 ? "border-l-4 border-l-teal" : "border-l-4 border-l-red"
-                            )}
-                         >
-                            <div className="flex items-center gap-2 mb-4">
-                               <div className={cn("p-2 rounded-lg bg-white/5", i === 0 ? "text-teal" : "text-red")}>
-                                  {i === 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                               </div>
-                               <span className="text-[10px] font-black uppercase text-white/40 tracking-widest">{msg.role} AI</span>
-                            </div>
-                            <p className="text-white/70 leading-relaxed font-medium italic">"{msg.content}"</p>
-                         </motion.div>
-                      ))}
-
-                      <motion.div 
-                         initial={{ opacity: 0, scale: 0.9 }}
-                         animate={{ opacity: 1, scale: 1 }}
-                         transition={{ delay: 0.5 }}
-                         className="md:col-span-2 glass-dark p-10 border-white/10 bg-purple-500/5 relative overflow-hidden"
-                      >
-                         <div className="flex items-center gap-2 mb-6">
-                            <ShieldCheck size={20} className="text-purple-400" />
-                            <span className="text-[10px] font-black uppercase text-purple-400 tracking-widest">The Judge Verdict</span>
-                         </div>
-                         <p className="text-2xl font-bold text-white relative z-10 leading-relaxed">
-                            {outcome.debate[2].content}
-                         </p>
-                         <div className="absolute -right-12 -bottom-12 opacity-5">
-                            <Scale size={200} className="text-purple-400" />
-                         </div>
-                      </motion.div>
-                   </div>
-                </div>
-             </div>
-
-             <div className="lg:col-span-4 space-y-6 sticky top-0 h-fit">
-                <div className="glass-dark p-8 border-white/10 bg-gradient-to-br from-purple-500/10 to-transparent">
-                   <div className="flex items-center gap-2 text-purple-400 mb-8 font-black uppercase tracking-widest text-[10px]">
-                      <Brain size={16} fill="currentColor" /> Consensus Output
-                   </div>
-                   
-                   <div className="space-y-12">
-                      <div className="text-center">
-                         <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mb-2">Primary Recommendation</p>
-                         <h4 className="text-3xl font-black font-display text-white mb-6 underline decoration-purple-500 decoration-4 underline-offset-4 tracking-tight">
-                            {outcome.recommendation}
-                         </h4>
-                         
-                         <div className="inline-flex flex-col items-center gap-2">
-                            <div className="text-xs font-black text-white/40 uppercase tracking-widest">Confidence Score</div>
-                            <div className="text-5xl font-black font-display text-purple-400">{outcome.confidence}%</div>
-                         </div>
-                      </div>
-
-                      <div className="space-y-4">
-                         <div className="p-4 rounded-xl bg-teal/10 border border-teal/20 flex items-center gap-3">
-                            <CheckCircle2 size={18} className="text-teal" />
-                            <span className="text-xs font-bold text-teal">Low Personal Bias Detected</span>
-                         </div>
-                         <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center gap-3">
-                            <AlertCircle size={18} className="text-amber-500" />
-                            <span className="text-xs font-bold text-amber-500 italic">Sunk-cost fallacy risk: MEDIUM</span>
-                         </div>
-                      </div>
-
-                      <div className="space-y-4 pt-8">
-                         <button 
-                            onClick={() => setActiveStep('IDEATE')}
-                            className="w-full bg-white/5 border border-white/10 text-white font-bold py-4 rounded-2xl hover:bg-white/10 transition-all flex items-center justify-center gap-2"
-                         >
-                            <RefreshCw size={18} /> Reset Copilot
-                         </button>
-                         <button className="w-full bg-purple-500 text-white font-black py-4 rounded-2xl shadow-[0_0_20px_rgba(157,80,255,0.3)] hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
-                            <Zap size={18} /> Sync to Execution Engine
-                         </button>
-                      </div>
-                   </div>
-                </div>
-
-                <div className="p-6 rounded-2xl bg-white/5 border border-white/5">
-                   <div className="flex items-center gap-2 mb-4 text-white/40 text-[10px] font-black uppercase tracking-widest">
-                      <Info size={14} /> Future Simulation
-                   </div>
-                   <div className="space-y-4">
-                      <div className="flex items-center justify-between text-xs">
-                         <span className="text-white/60">30-day Outcome:</span>
-                         <span className="text-teal font-bold">+12% Stability</span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs">
-                         <span className="text-white/60">90-day Outcome:</span>
-                         <span className="text-purple-400 font-bold">Skill Mastery</span>
-                      </div>
-                   </div>
-                </div>
-             </div>
+              </button>
+            ))}
           </div>
-       )}
+        </div>
+
+        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-2xl">
+          <div className="mb-5 flex flex-wrap items-center gap-3">
+            {(Object.keys(MODE_META) as Mode[]).map((m) => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                className={cn(
+                  "flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.16em] transition-all",
+                  mode === m
+                    ? "border-blue/40 bg-blue/15 text-blue"
+                    : "border-white/10 bg-white/[0.02] text-white/55 hover:text-white/80",
+                )}
+              >
+                {MODE_META[m].icon} {MODE_META[m].label}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-4">
+            <div className="max-h-[560px] space-y-4 overflow-y-auto pr-1">
+              {entries.map((entry) => (
+                <div key={`bubble-${entry.id}`} className="space-y-3">
+                  <div className="flex justify-end">
+                    <div className="max-w-[80%] rounded-2xl border border-blue/30 bg-blue/10 px-4 py-3 text-sm font-medium text-white/90">
+                      {entry.prompt}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-start">
+                    <div className="w-full max-w-[88%] rounded-2xl border border-white/12 bg-black/30 p-4">
+                      {entry.clarification ? (
+                        <div className="space-y-2">
+                          <p className="text-sm font-semibold text-white/90">
+                            I need two quick clarifications before giving a high-confidence recommendation:
+                          </p>
+                          {entry.clarification.map((q) => (
+                            <p key={q} className="text-sm text-white/70">
+                              - {q}
+                            </p>
+                          ))}
+                        </div>
+                      ) : entry.response ? (
+                        <div className="space-y-4">
+                          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue">1. Problem Understanding</p>
+                            <p className="mt-2 text-sm text-white/85">{entry.response.problemUnderstanding}</p>
+                            <div className="mt-2 space-y-1">
+                              {entry.response.hiddenConcerns.slice(0, 2).map((concern) => (
+                                <p key={concern} className="text-xs text-white/60">- {concern}</p>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue">2. Context Awareness</p>
+                            {entry.response.contextAwareness.map((line) => (
+                              <p key={line} className="mt-1 text-xs text-white/70">- {line}</p>
+                            ))}
+                          </div>
+
+                          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue">3. Options</p>
+                            <div className="mt-2 grid grid-cols-1 gap-2">
+                              {entry.response.options.map((option, index) => (
+                                <p key={option} className="text-sm text-white/80">{index + 1}. {option}</p>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue">4. Pros & Cons</p>
+                            <div className="mt-2 space-y-3">
+                              {entry.response.prosCons.slice(0, 3).map((item) => (
+                                <div key={item.option} className="rounded-lg border border-white/10 bg-white/[0.02] p-2">
+                                  <p className="text-xs font-black uppercase tracking-widest text-white/65">{item.option}</p>
+                                  <p className="text-xs text-emerald-300 mt-1">+ {item.pros.join(" | ")}</p>
+                                  <p className="text-xs text-red-300 mt-1">- {item.cons.join(" | ")}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {entry.mode === "DEBATE" && entry.response.debate.length > 0 && (
+                            <div className="rounded-xl border border-purple-400/25 bg-purple-500/10 p-3">
+                              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-300">Debate Mode</p>
+                              {entry.response.debate.map((d) => (
+                                <p key={`${d.role}-${d.content.slice(0, 12)}`} className="mt-2 text-xs text-white/75">
+                                  <span className="font-black text-white/90">{d.role}:</span> {d.content}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+
+                          {entry.mode === "BIAS" && (
+                            <div className="rounded-xl border border-amber-300/25 bg-amber-400/10 p-3">
+                              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-300">Bias Check</p>
+                              {entry.response.biasChecks.map((b) => (
+                                <p key={b} className="mt-1 text-xs text-white/75">- {b}</p>
+                              ))}
+                            </div>
+                          )}
+
+                          {entry.mode === "FUTURE" && (
+                            <div className="rounded-xl border border-cyan-300/25 bg-cyan-500/10 p-3">
+                              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">Future Simulation</p>
+                              {entry.response.futureSimulation.map((f) => (
+                                <p key={f.day} className="mt-1 text-xs text-white/75">
+                                  <span className="font-black text-white/90">{f.day}:</span> {f.outlook}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue">5. Recommendation</p>
+                            <p className="mt-2 text-sm font-semibold text-white/90">{entry.response.recommendation}</p>
+                          </div>
+
+                          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue">6. Confidence Level</p>
+                            <p className="mt-2 text-sm text-white/85">
+                              {entry.response.confidenceLabel} ({entry.response.confidence}%)
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-white/55">Thinking...</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {loading && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="rounded-2xl border border-blue/20 bg-blue/10 px-4 py-3 text-sm font-semibold text-blue"
+                >
+                  {LOADING_STEPS[loadingStep]}
+                </motion.div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
+              <div className="mb-3 flex flex-wrap gap-2">
+                {followUps.map((item) => (
+                  <button
+                    key={item}
+                    onClick={() => applyFollowUp(item)}
+                    disabled={loading || !activeEntry}
+                    className="rounded-full border border-white/15 bg-white/[0.04] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white/65 hover:text-white disabled:opacity-40"
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") submitPrompt();
+                  }}
+                  className="flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none focus:border-blue/40"
+                  placeholder="Ask your decision question..."
+                />
+                <button
+                  onClick={() => submitPrompt()}
+                  disabled={loading || !input.trim()}
+                  className="rounded-xl bg-blue px-4 py-3 text-background transition-all disabled:opacity-40"
+                >
+                  {loading ? <RefreshCw size={18} className="animate-spin" /> : <Send size={18} />}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-2xl">
+          <div className="mb-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em] text-white/35">
+            <Sparkles size={14} /> Insights Panel
+          </div>
+
+          {activeEntry?.response ? (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-blue/20 bg-blue/10 p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-blue/80">Clarity Score</p>
+                <p className="mt-2 text-3xl font-black text-white">{activeEntry.response.clarityScore}%</p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/45">Risk Level</p>
+                <p
+                  className={cn(
+                    "mt-2 text-xl font-black",
+                    activeEntry.response.riskLevel === "Low" && "text-emerald-300",
+                    activeEntry.response.riskLevel === "Medium" && "text-amber-300",
+                    activeEntry.response.riskLevel === "High" && "text-red-300",
+                  )}
+                >
+                  {activeEntry.response.riskLevel}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/45">Suggested Actions</p>
+                <div className="mt-2 space-y-2">
+                  {activeEntry.response.suggestedActions.map((action) => (
+                    <p key={action} className="text-xs text-white/75">- {action}</p>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-white/10 p-4 text-xs text-white/45">
+              Ask a decision question to unlock clarity, risk, and action insights.
+            </div>
+          )}
+
+          <div className="mt-6 rounded-2xl border border-purple-400/20 bg-purple-500/10 p-4">
+            <div className="flex items-start gap-2">
+              <AlertTriangle size={16} className="mt-0.5 text-purple-300" />
+              <p className="text-xs text-white/70">
+                This mentor is optimized for student decisions across academics, career direction,
+                and life trade-offs with practical, structured reasoning.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -14,6 +14,7 @@ import {
   Settings,
   ShieldCheck,
   ShoppingBag,
+  UserRound,
   Zap,
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
@@ -30,7 +31,6 @@ interface SidebarProps {
   onTabChange: (tab: any) => void;
   coins: number;
   studentProfile: StudentProfile;
-  onEditProfile: () => void;
   onSignOut: () => void;
 }
 
@@ -39,7 +39,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onTabChange,
   coins,
   studentProfile,
-  onEditProfile,
   onSignOut,
 }) => {
   const menuItems = [
@@ -50,6 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: "EXECUTION", icon: Zap, label: "Execution", sub: "Kanban & Momentum" },
     { id: "INSIGHTS", icon: BarChart3, label: "Insights", sub: "Intelligence Profile" },
     { id: "MARKET", icon: ShoppingBag, label: "Neural Market", sub: "The Token Shop" },
+    { id: "PROFILE", icon: UserRound, label: "Profile", sub: "Personalization Hub" },
   ];
 
   return (
@@ -133,11 +133,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         <button
-          onClick={onEditProfile}
+          onClick={() => onTabChange("PROFILE")}
           className="flex w-full items-center gap-4 rounded-2xl px-5 py-4 text-white/30 transition-all hover:bg-white/5 hover:text-white"
         >
           <Settings size={20} />
-          <span className="text-sm font-bold">Student Profile</span>
+          <span className="text-sm font-bold">Open Profile Page</span>
         </button>
 
         <div className="border-t border-white/5 pt-2">
