@@ -13,6 +13,8 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+import { LiquidSlider, LiquidSwitch, LiquidMagnifyingGlass } from './liquid-glass/LiquidGlassComponents';
+
 interface DashboardProps {
   onModuleStart: (tab: any) => void;
   onStudyStart: (topic: string) => void;
@@ -22,6 +24,8 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ onModuleStart, onStudyStart, studentProfile }) => {
   const [searchValue, setSearchValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const [sliderVal, setSliderVal] = useState(50);
+  const [switchVal, setSwitchVal] = useState(true);
 
   const cards = [
     { title: 'Focus Flow', value: '88', unit: '%', color: 'text-blue', icon: Brain, status: 'Strong', desc: 'Sustained attention for 45m' },
@@ -225,6 +229,40 @@ export const Dashboard: React.FC<DashboardProps> = ({ onModuleStart, onStudyStar
                     </motion.button>
                  </div>
               </div>
+           </div>
+        </div>
+      </div>
+
+      {/* WWDC 2025 Liquid Glass Showcase */}
+      <div className="pt-8 border-t border-white/5 space-y-8">
+        <div className="flex items-center gap-4 px-2">
+           <h3 className="text-xl font-black font-display text-white italic tracking-widest flex items-center gap-3">
+              <Shield size={20} className="text-teal" /> LIQUID GLASS ENGINE (EXPERIMENTAL)
+           </h3>
+           <div className="flex-1 h-px bg-white/5" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end">
+           <div className="glass p-6 space-y-6 flex flex-col justify-between">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Liquid Slider</p>
+                <p className="text-xs font-medium text-white/60 mb-6">Convex bezel refraction slider</p>
+              </div>
+              <LiquidSlider value={sliderVal} onChange={setSliderVal} />
+           </div>
+           
+           <div className="glass p-6 space-y-6 flex flex-col justify-between h-full">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">Liquid Switch</p>
+                <p className="text-xs font-medium text-white/60 mb-6">Concave lip outer track + convex knob</p>
+              </div>
+              <div className="flex justify-center mt-auto py-2">
+                <LiquidSwitch checked={switchVal} onChange={setSwitchVal} />
+              </div>
+           </div>
+
+           <div className="glass p-6 space-y-6 flex flex-col h-full">
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Liquid Magnifier</p>
+              <LiquidMagnifyingGlass text="Apple introduced Liquid Glass during WWDC 2025—a stunning UI effect making elements appear to be made of curved, refractive glass." />
            </div>
         </div>
       </div>
