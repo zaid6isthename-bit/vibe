@@ -440,32 +440,68 @@ body {
 }
 
 /* ── Deep Cosmos ─────────────────────────────────────────── */
-.bg-cosmos::before {
+.bg-cosmos {
+  pointer-events: none;
+}
+
+.bg-cosmos::before,
+.bg-cosmos::after {
   content: '';
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-image:
-    radial-gradient(1px 1px at 20% 30%, white 0%, transparent 100%),
-    radial-gradient(1px 1px at 40% 70%, rgba(255, 255, 255, 0.8) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 60% 20%, white 0%, transparent 100%),
-    radial-gradient(1px 1px at 80% 80%, rgba(255, 255, 255, 0.6) 0%, transparent 100%),
-    radial-gradient(1px 1px at 10% 60%, rgba(255, 255, 255, 0.9) 0%, transparent 100%),
-    radial-gradient(2px 2px at 70% 50%, rgba(200, 200, 255, 0.8) 0%, transparent 100%),
-    radial-gradient(1px 1px at 90% 10%, white 0%, transparent 100%),
-    radial-gradient(1px 1px at 30% 90%, rgba(255, 255, 255, 0.7) 0%, transparent 100%);
-  animation: cosmosDrift 60s linear infinite;
 }
 
-@keyframes cosmosDrift {
-  from {
-    transform: translateY(0) rotate(0deg);
-  }
+.bg-cosmos::before {
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, white 100%, transparent 100%),
+    radial-gradient(1px 1px at 40% 70%, rgba(255, 255, 255, 0.8) 100%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 60% 20%, white 100%, transparent 100%),
+    radial-gradient(1px 1px at 80% 80%, rgba(255, 255, 255, 0.6) 100%, transparent 100%),
+    radial-gradient(2px 2px at 10% 60%, rgba(255, 255, 255, 0.9) 100%, transparent 100%),
+    radial-gradient(2px 2px at 70% 50%, rgba(200, 200, 255, 0.8) 100%, transparent 100%),
+    radial-gradient(1px 1px at 90% 10%, white 100%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 30% 90%, rgba(255, 255, 255, 0.7) 100%, transparent 100%),
+    radial-gradient(1px 1px at 50% 15%, rgba(255, 255, 255, 0.5) 100%, transparent 100%),
+    radial-gradient(1px 1px at 85% 35%, white 100%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 15% 85%, rgba(200, 220, 255, 0.8) 100%, transparent 100%),
+    radial-gradient(2px 2px at 45% 45%, rgba(255, 255, 255, 0.9) 100%, transparent 100%),
+    radial-gradient(1px 1px at 75% 65%, white 100%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 25% 45%, rgba(255, 255, 255, 0.7) 100%, transparent 100%),
+    radial-gradient(1px 1px at 55% 85%, rgba(255, 255, 255, 0.6) 100%, transparent 100%);
+  background-size: 350px 350px;
+  animation: cosmosDriftLayer1 60s linear infinite;
+  opacity: 0.8;
+}
 
-  to {
-    transform: translateY(-20px) rotate(1deg);
-  }
+.bg-cosmos::after {
+  background-image:
+    radial-gradient(1.5px 1.5px at 10% 20%, white 100%, transparent 100%),
+    radial-gradient(2px 2px at 35% 80%, rgba(255, 255, 255, 0.9) 100%, transparent 100%),
+    radial-gradient(1px 1px at 65% 10%, rgba(200, 220, 255, 0.8) 100%, transparent 100%),
+    radial-gradient(1px 1px at 85% 60%, rgba(255, 255, 255, 0.6) 100%, transparent 100%),
+    radial-gradient(2.5px 2.5px at 25% 55%, rgba(255, 255, 255, 1) 100%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 95% 30%, rgba(255, 255, 255, 0.7) 100%, transparent 100%),
+    radial-gradient(1px 1px at 50% 95%, white 100%, transparent 100%),
+    radial-gradient(2px 2px at 15% 15%, rgba(255, 255, 255, 0.8) 100%, transparent 100%),
+    radial-gradient(1px 1px at 70% 35%, rgba(200, 200, 255, 0.7) 100%, transparent 100%),
+    radial-gradient(1.8px 1.8px at 45% 75%, white 100%, transparent 100%),
+    radial-gradient(1px 1px at 80% 90%, rgba(255, 255, 255, 0.5) 100%, transparent 100%),
+    radial-gradient(1px 1px at 30% 40%, rgba(255, 255, 255, 0.8) 100%, transparent 100%);
+  background-size: 200px 200px;
+  animation: cosmosDriftLayer2 40s linear infinite;
+  opacity: 0.6;
+}
+
+@keyframes cosmosDriftLayer1 {
+  from { background-position: 0 0; }
+  to { background-position: 0 -350px; }
+}
+
+@keyframes cosmosDriftLayer2 {
+  from { background-position: 0 0; }
+  to { background-position: -200px -200px; }
 }
 
 /* ── Aurora Borealis ─────────────────────────────────────── */
